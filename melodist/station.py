@@ -295,7 +295,7 @@ class Station(object):
 
         self.data_disagg.precip = precip_disagg
 
-    def disaggregate_radiation(self, method='pot_rad', angstr_a=0.25, angstr_b=0.5):
+    def disaggregate_radiation(self, method='pot_rad'):
         """
         Disaggregate solar radiation.
 
@@ -319,7 +319,7 @@ class Station(object):
         if self.sun_times is None:
             self.calc_sun_times()
         pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
-        self.data_disagg.glob = melodist.disaggregate_radiation(self.data_daily, self.sun_times, pot_rad, method=method, angstr_a=angstr_a, angstr_b=angstr_b)
+        self.data_disagg.glob = melodist.disaggregate_radiation(self.data_daily, self.sun_times, pot_rad, method=method, angstr_a=self.statistics.glob.angstroem_a, angstr_b=self.statistics.glob.angstroem_b)
 
     def interpolate(self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs):
         """

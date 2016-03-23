@@ -24,10 +24,11 @@
 ###############################################################################################################
 
 from __future__ import print_function, division, absolute_import
+from math import cos, sin, acos, pi
 import melodist.util
 import pandas as pd
 import numpy as np
-from math import cos, sin, acos, pi
+import scipy.optimize
 
 """
 This routine diaggregates daily values of global radiation data to hourly values
@@ -71,7 +72,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
             # @todo: add time_zone to global radiation calculation as well
             # Call Angstrom model using the daily potential radiation as computed previously
             if sun_times.daylength[index] > 0:
-                globalrad = (angstr_a + angstr_b * data_daily.ssd[index] / sun_times.daylength[index]) * pot_rad_daily[index] / 24
+                globalrad = angstroem(data_daily.ssd[index], sun_times.daylength[index], pot_rad_daily[index] / 24, angstr_a, angstr_b)
             else:
                 globalrad = 0 # polar night case
         elif method == 'pot_rad_via_bc':
@@ -205,3 +206,56 @@ def bristow_campbell(data_daily, pot_rad, A = 0.75, C = 2.4):
 
         R0[i] = transmissivity[i] * pot_rad[i]
     return R0
+
+def angstroem(ssd, day_length, pot_rad_daily, a, b):
+    """
+    Calculate mean daily radiation from observed sunshine duration according to Angstroem (1924).
+
+    Parameters
+    ----------
+    ssd : Series
+        Observed daily sunshine duration.
+
+    day_length : Series
+        Day lengths as calculated by ``calc_sun_times``.
+
+    pot_rad_daily : Series
+        Mean potential daily solar radiation.
+
+    a : float
+        First parameter for the Angstroem model (originally 0.25).
+
+    b : float
+        Second parameter for the Angstroem model (originally 0.75).
+    """
+    glob_day = (a + b * ssd / day_length) * pot_rad_daily
+    return glob_day
+
+def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
+    """
+    Fits the a and b parameters for the Angstroem (1924) model using observed daily
+    sunshine duration and mean daily (e.g. aggregated from hourly values) solar
+    radiation.
+
+    Parameters
+    ----------
+    ssd : Series
+        Observed daily sunshine duration.
+
+    day_length : Series
+        Day lengths as calculated by ``calc_sun_times``.
+
+    pot_rad_daily : Series
+        Mean potential daily solar radiation.
+
+    obs_rad_daily : Series
+        Mean observed daily solar radiation.
+    """
+    df = pd.DataFrame(data=dict(ssd=ssd, day_length=day_length, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
+
+    angstroem_opt = lambda x, a, b: angstroem(x[0], x[1], x[2], a, b)
+
+    x = np.array([df.ssd, df.day_length, df.pot])
+    popt, pcov = scipy.optimize.curve_fit(angstroem_opt, x, df.obs, p0=[0.25, 0.75])
+
+    return popt

@@ -50,6 +50,7 @@ class StationStatistics(object):
         self.precip = Bunch(months=None, stats=None)
         self.hum = Bunch(a0=None, a1=None, kr=None)
         self.temp = Bunch(max_delta=None)
+        self.glob = Bunch(angstroem_a=0.25, angstroem_b=0.75)
 
     @property
     def data(self):
@@ -100,6 +101,27 @@ class StationStatistics(object):
         Calculates statistics in order to derive diurnal patterns of temperature
         """
         self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
+
+    def calc_radiation_stats(self, data_daily, day_length=None):
+        """
+        Calculates statistics in order to derive solar radiation from sunshine duration.
+
+        Parameters
+        ----------
+        data_daily : DataFrame
+            Daily data from the associated ``Station`` object.
+
+        day_length : Series, optional
+            Day lengths as calculated by ``calc_sun_times``.
+        """
+        if 'ssd' in data_daily and day_length is not None:
+            df = pd.DataFrame(data=dict(ssd=data_daily.ssd, day_length=day_length)).dropna(how='any')
+            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(df.index), self._lon, self._lat, self._timezone)
+            pot_rad_daily = pot_rad.resample('D', how='mean')
+            obs_rad_daily = self.data.glob.resample('D', how='mean')
+            a, b = melodist.fit_angstroem_params(data_daily.ssd, day_length, pot_rad_daily, obs_rad_daily)
+            self.glob.angstroem_a = a
+            self.glob.angstroem_b = b
 
     def to_json(self, filename=None):
         """
