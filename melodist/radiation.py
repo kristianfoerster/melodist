@@ -54,11 +54,11 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
         raise ValueError('Invalid option')
 
     glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
-    pot_rad_daily = pot_rad.resample('D', how='sum')
+    pot_rad_daily = pot_rad.resample('D', how='mean')
 
     # call Bristow-Campbell model prior to radiation computations if required
     if method == 'pot_rad_via_bc':
-        rad_bc = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily / 24, bristcamp_a, bristcamp_c)
+        rad_bc = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c)
 
     # for this option calculate incoming solar radiation as a function of the station location, time and cloud cover
     for index, row in data_daily.iterrows():
@@ -72,7 +72,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
             # @todo: add time_zone to global radiation calculation as well
             # Call Angstrom model using the daily potential radiation as computed previously
             if sun_times.daylength[index] > 0:
-                globalrad = angstroem(data_daily.ssd[index], sun_times.daylength[index], pot_rad_daily[index] / 24, angstr_a, angstr_b)
+                globalrad = angstroem(data_daily.ssd[index], sun_times.daylength[index], pot_rad_daily[index], angstr_a, angstr_b)
             else:
                 globalrad = 0 # polar night case
         elif method == 'pot_rad_via_bc':
@@ -86,7 +86,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
             # if np.isnan(globalrad):
             #     globalrad = 0.5 * pot_rad_daily[index] / 24
             if pot_rad_daily[index] > 0.:
-                glob_disagg[datetime] = (pot_rad[datetime]/pot_rad_daily[index]) * (globalrad * 24.)
+                glob_disagg[datetime] = (pot_rad[datetime] / pot_rad_daily[index]) * globalrad
             else:
                 glob_disagg[datetime] = 0.  # handle polar night values
 
