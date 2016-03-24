@@ -35,7 +35,7 @@ This routine diaggregates daily values of global radiation data to hourly values
 """
 
 
-def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', angstr_a=0.25, angstr_b=0.5):
+def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', angstr_a=0.25, angstr_b=0.5, bristcamp_a=0.75, bristcamp_c=2.4):
     """general function for radiation disaggregation
 
     Args:
@@ -58,7 +58,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
 
     # call Bristow-Campbell model prior to radiation computations if required
     if method == 'pot_rad_via_bc':
-        rad_bc = bristow_campbell(data_daily, pot_rad_daily)
+        rad_bc = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily / 24, bristcamp_a, bristcamp_c)
 
     # for this option calculate incoming solar radiation as a function of the station location, time and cloud cover
     for index, row in data_daily.iterrows():
@@ -77,7 +77,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
                 globalrad = 0 # polar night case
         elif method == 'pot_rad_via_bc':
             # using data from Bristow-Campbell model
-            globalrad = rad_bc[index] / 24
+            globalrad = rad_bc[index]
 
         for hour in range(0, 24):
             datetime = index.replace(hour=hour)
@@ -165,7 +165,7 @@ def potential_radiation(dates, lon, lat, timezone):
     return glob
 
 
-def bristow_campbell(data_daily, pot_rad, A = 0.75, C = 2.4):
+def bristow_campbell(tmin, tmax, pot_rad_daily, A, C):
     """calculates potential shortwave radiation based on minimum and maximum temperature
 
     This routine calculates global radiation as described in:
@@ -175,37 +175,59 @@ def bristow_campbell(data_daily, pot_rad, A = 0.75, C = 2.4):
 
     Args:
         daily_data: time series (daily data) including at least minimum and maximum temeprature
-        pot_rad: hourly dataframe including potential radiation
+        pot_rad_daily: mean potential daily radiation
         A: parameter A of the Bristow-Campbell model
         C: parameter C of the Bristow-Campbell model
     Returns:
         series of potential shortwave radiation
     """
 
+    assert tmin.index.equals(tmax.index)
 
-    # nmean indicates the number of days for calculating the average difference between Tn and Tx    
-    R0 = pd.Series(index=data_daily.index)
-    n_steps = len(R0)
-    avDeltaT = np.zeros(n_steps)
-    transmissivity = np.zeros(n_steps)
+    temp = pd.DataFrame(data=dict(tmin=tmin, tmax=tmax))
+    temp = temp.reindex(pd.DatetimeIndex(start=temp.index[0], end=temp.index[-1], freq='D'))
+    temp['tmin_nextday'] = temp.tmin
+    temp.tmin_nextday.iloc[:-1] = temp.tmin.iloc[1:].values
 
-    # calculate mean daily temperature range for each month
-    dT = data_daily.tmax - data_daily.tmin
-    dT_monthly = dT.resample(rule="24h", how="mean")
-    dT_m_avg = dT_monthly.groupby(dT_monthly.index.month).aggregate("mean")
+    temp = temp.loc[tmin.index]
+    pot_rad_daily = pot_rad_daily.loc[tmin.index]
 
-    dT[np.isnan(dT)] = 0
-    for i in range(0, n_steps):
-        if i < (n_steps - 1) and ~np.isnan(data_daily.tmax[i]) and ~np.isnan(data_daily.tmin[i]) and ~np.isnan(data_daily.tmin[i+1]):
-            avDeltaT[i] = data_daily.tmax[i] - 0.5 * (data_daily.tmin[i] + data_daily.tmin[i + 1]) # Tx(i) - 0.5* (Tn(i)+Tn(i+1));
-        else:
-            avDeltaT[i]=0.
+    dT = temp.tmax - (temp.tmin + temp.tmin_nextday) / 2
 
-        B = 0.036 * np.exp(-0.154 * dT_m_avg[data_daily.index.month[i]])
-        transmissivity[i] = A * (1 - np.exp(-B * dT[i]**C))
+    dT_m_avg = dT.groupby(dT.index.month).mean()
+    B = 0.036 * np.exp(-0.154 * dT_m_avg[temp.index.month])
+    B.index = temp.index
 
-        R0[i] = transmissivity[i] * pot_rad[i]
+    transmissivity = A * (1 - np.exp(-B * dT**C))
+    R0 = transmissivity * pot_rad_daily
+
     return R0
+
+def fit_bristow_campbell_params(tmin, tmax, pot_rad_daily, obs_rad_daily):
+    """
+    Fit the A and C parameters for the Bristow & Campbell (1984) model using observed daily
+    minimum and maximum temperature and mean daily (e.g. aggregated from hourly values) solar
+    radiation.
+
+    Parameters
+    ----------
+    tmin : Series
+        Observed daily minimum temperature.
+
+    tmax : Series
+        Observed daily maximum temperature.
+
+    pot_rad_daily : Series
+        Mean potential daily solar radiation.
+
+    obs_rad_daily : Series
+        Mean observed daily solar radiation.
+    """
+    df = pd.DataFrame(data=dict(tmin=tmin, tmax=tmax, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
+    bc_absbias = lambda ac: np.abs(np.mean(bristow_campbell(df.tmin, df.tmax, df.pot, ac[0], ac[1]) - df.obs))
+    res = scipy.optimize.minimize(bc_absbias, [0.75, 2.4]) # i.e. we minimize the absolute bias
+
+    return res.x
 
 def angstroem(ssd, day_length, pot_rad_daily, a, b):
     """
@@ -233,7 +255,7 @@ def angstroem(ssd, day_length, pot_rad_daily, a, b):
 
 def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
     """
-    Fits the a and b parameters for the Angstroem (1924) model using observed daily
+    Fit the a and b parameters for the Angstroem (1924) model using observed daily
     sunshine duration and mean daily (e.g. aggregated from hourly values) solar
     radiation.
 

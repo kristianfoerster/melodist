@@ -50,7 +50,7 @@ class StationStatistics(object):
         self.precip = Bunch(months=None, stats=None)
         self.hum = Bunch(a0=None, a1=None, kr=None)
         self.temp = Bunch(max_delta=None)
-        self.glob = Bunch(angstroem_a=0.25, angstroem_b=0.75)
+        self.glob = Bunch(angstroem_a=0.25, angstroem_b=0.75, bristcamp_a=0.75, bristcamp_c=2.4)
 
     @property
     def data(self):
@@ -104,7 +104,8 @@ class StationStatistics(object):
 
     def calc_radiation_stats(self, data_daily, day_length=None):
         """
-        Calculates statistics in order to derive solar radiation from sunshine duration.
+        Calculates statistics in order to derive solar radiation from sunshine duration or
+        minimum/maximum temperature.
 
         Parameters
         ----------
@@ -122,6 +123,22 @@ class StationStatistics(object):
             a, b = melodist.fit_angstroem_params(data_daily.ssd, day_length, pot_rad_daily, obs_rad_daily)
             self.glob.angstroem_a = a
             self.glob.angstroem_b = b
+
+        if 'tmin' in data_daily and 'tmax' in data_daily:
+            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(df.index), self._lon, self._lat, self._timezone)
+            pot_rad_daily = pot_rad.resample('D', how='mean')
+            obs_rad_daily = self.data.glob.resample('D', how='mean')
+            df = pd.DataFrame(
+                data=dict(
+                    tmin=data_daily.tmin,
+                    tmax=data_daily.tmax,
+                    pot_rad=pot_rad_daily,
+                    obs_rad=obs_rad_daily,
+                )
+            ).dropna(how='any')
+            a, c = melodist.fit_bristow_campbell_params(df.tmin, df.tmax, df.pot_rad, df.obs_rad)
+            self.glob.bristcamp_a = a
+            self.glob.bristcamp_c = c
 
     def to_json(self, filename=None):
         """

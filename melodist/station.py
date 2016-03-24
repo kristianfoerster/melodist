@@ -321,8 +321,17 @@ class Station(object):
         """
         if self.sun_times is None:
             self.calc_sun_times()
-        pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
-        self.data_disagg.glob = melodist.disaggregate_radiation(self.data_daily, self.sun_times, pot_rad, method=method, angstr_a=self.statistics.glob.angstroem_a, angstr_b=self.statistics.glob.angstroem_b)
+
+        self.data_disagg.glob = melodist.disaggregate_radiation(
+            self.data_daily,
+            self.sun_times,
+            melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone),
+            method=method,
+            angstr_a=self.statistics.glob.angstroem_a,
+            angstr_b=self.statistics.glob.angstroem_b,
+            bristcamp_a=self.statistics.glob.bristcamp_a,
+            bristcamp_c=self.statistics.glob.bristcamp_c
+        )
 
     def interpolate(self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs):
         """
