@@ -56,40 +56,20 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
     glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
     pot_rad_daily = pot_rad.resample('D', how='mean')
 
-    # call Bristow-Campbell model prior to radiation computations if required
-    if method == 'pot_rad_via_bc':
-        rad_bc = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c)
+    if method == 'pot_rad':
+        globalrad = data_daily.glob
+    elif method == 'pot_rad_via_ssd':
+        # in this case use the Angstrom model
+        globalrad = pd.Series(index=data_daily.index, data=0.)
+        dates = sun_times.index[sun_times.daylength > 0] # account for polar nights
+        globalrad[dates] = angstroem(data_daily.ssd[dates], sun_times.daylength[dates], pot_rad_daily[dates], angstr_a, angstr_b)
+    elif method == 'pot_rad_via_bc':
+        # using data from Bristow-Campbell model
+        globalrad = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c)
 
-    # for this option calculate incoming solar radiation as a function of the station location, time and cloud cover
-    for index, row in data_daily.iterrows():
-        # now account for the available radiation from the daily observations
-        if method == 'pot_rad':
-            globalrad = data_daily.glob[index]
-        elif method == 'pot_rad_via_ssd':
-            # in this case use the Angstrom model...
-            # first step: calculate maximum sunshine duration
-
-            # @todo: add time_zone to global radiation calculation as well
-            # Call Angstrom model using the daily potential radiation as computed previously
-            if sun_times.daylength[index] > 0:
-                globalrad = angstroem(data_daily.ssd[index], sun_times.daylength[index], pot_rad_daily[index], angstr_a, angstr_b)
-            else:
-                globalrad = 0 # polar night case
-        elif method == 'pot_rad_via_bc':
-            # using data from Bristow-Campbell model
-            globalrad = rad_bc[index]
-
-        for hour in range(0, 24):
-            datetime = index.replace(hour=hour)
-
-            # error handling: if globalrad is invalid, apply 0.5 * potential value as a crude assumption
-            # if np.isnan(globalrad):
-            #     globalrad = 0.5 * pot_rad_daily[index] / 24
-            if pot_rad_daily[index] > 0.:
-                glob_disagg[datetime] = (pot_rad[datetime] / pot_rad_daily[index]) * globalrad
-            else:
-                glob_disagg[datetime] = 0.  # handle polar night values
-
+    globalrad_equal = globalrad.reindex(pot_rad.index, method='ffill') # hourly values (replicate daily mean value for each hour)
+    pot_rad_daily_equal = pot_rad_daily.reindex(pot_rad.index, method='ffill')
+    glob_disagg = pot_rad / pot_rad_daily_equal * globalrad_equal
     glob_disagg[glob_disagg < 1e-2] = 0.
 
     return glob_disagg
