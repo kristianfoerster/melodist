@@ -368,7 +368,7 @@ def aggregate_precipitation(vec_data):
     #print('n_in='+str(n_in)+', n_out=' + str(n_out))
 
     # series of box types:
-    vbtype = np.zeros((n_out,))
+    vbtype = np.zeros((n_out,), dtype=np.int)
 
     # fields for empirical probabilities
     # counts
