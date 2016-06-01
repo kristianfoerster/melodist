@@ -89,6 +89,9 @@ class Station(object):
         assert df.index.resolution == 'day'
         assert df.index.is_monotonic_increasing
 
+        if df.index.freq is None: # likely some days are missing
+            df = df.reindex(pd.DatetimeIndex(start=df.index[0], end=df.index[-1], freq='D'))
+
         for var in 'tmin', 'tmax', 'tmean':
             if var in df: assert not any(df[var] < 200), 'Implausible temperature values detected - temperatures must be in K'
 
@@ -295,7 +298,7 @@ class Station(object):
 
         self.data_disagg.precip = precip_disagg
 
-    def disaggregate_radiation(self, method='pot_rad', angstr_a=0.25, angstr_b=0.5):
+    def disaggregate_radiation(self, method='pot_rad'):
         """
         Disaggregate solar radiation.
 
@@ -318,8 +321,17 @@ class Station(object):
         """
         if self.sun_times is None:
             self.calc_sun_times()
-        pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
-        self.data_disagg.glob = melodist.disaggregate_radiation(self.data_daily, self.sun_times, pot_rad, method=method, angstr_a=angstr_a, angstr_b=angstr_b)
+
+        self.data_disagg.glob = melodist.disaggregate_radiation(
+            self.data_daily,
+            self.sun_times,
+            melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone),
+            method=method,
+            angstr_a=self.statistics.glob.angstroem_a,
+            angstr_b=self.statistics.glob.angstroem_b,
+            bristcamp_a=self.statistics.glob.bristcamp_a,
+            bristcamp_c=self.statistics.glob.bristcamp_c
+        )
 
     def interpolate(self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs):
         """
