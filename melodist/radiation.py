@@ -54,7 +54,7 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
         raise ValueError('Invalid option')
 
     glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
-    pot_rad_daily = pot_rad.resample('D', how='mean')
+    pot_rad_daily = pot_rad.resample('D').mean()
 
     if method == 'pot_rad':
         globalrad = data_daily.glob

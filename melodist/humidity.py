@@ -87,7 +87,7 @@ def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=Non
 def calculate_dewpoint_regression(hourly_data_obs, return_stats=False):
     temphum = hourly_data_obs[['temp', 'hum']]
 
-    tdew = melodist.util.dewpoint_temperature(temphum.temp, temphum.hum).resample('D', how='mean')
+    tdew = melodist.util.dewpoint_temperature(temphum.temp, temphum.hum).resample('D').mean()
     tmin = temphum.temp.groupby(temphum.index.date).min()
     df = pd.DataFrame(data=dict(tmin=tmin, tdew=tdew)).dropna(how='any')
 

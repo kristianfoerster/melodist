@@ -345,9 +345,6 @@ def aggregate_precipitation(vec_data):
     n_in = len(vec_data)
     n_out = np.floor(n_in/2);
 
-    # create time series for the next level
-    #vdn = vec_data.resample(rule="%dH" % dt*2, how="sum", closed="right", label='right')
-
     # alternative:
     # 1st step: new time series
     vec_time = vec_data.index

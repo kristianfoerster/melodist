@@ -37,12 +37,15 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
 
     packages=find_packages(exclude=['docs']),
 
-    install_requires=['numpy', 'scipy', 'pandas'],
+    install_requires=[
+        'numpy',
+        'scipy',
+        'pandas>=0.18.0',
+    ],
 )

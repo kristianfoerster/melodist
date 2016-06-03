@@ -256,7 +256,7 @@ def get_shift_by_data(temp_hourly, lon, lat, time_zone):
     time_zone:        timezone
     '''
     #prepare a daily index 
-    days = temp_hourly.resample('D', how="max")
+    days = temp_hourly.resample('D').max()
     max_delta = days * np.nan
 
     sun_times = melodist.util.get_sun_times(days.index, lon, lat, time_zone)
@@ -281,8 +281,7 @@ def get_shift_by_data(temp_hourly, lon, lat, time_zone):
             #write to daily pd df
             max_delta[index] = delta_max
         
-    # months = days.resample("M" ,how="mean")
-    months = max_delta.resample("M" ,how="mean")
+    months = max_delta.resample('M').mean()
     data_month_mean = months.groupby(months.index.month).agg('mean')
     shift_max_month_mean = data_month_mean.transpose()
     
