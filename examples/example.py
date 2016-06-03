@@ -115,10 +115,9 @@ debilt.disaggregate_wind(method='cosine')
 # Step 6: disaggregate radiation
 # Suppose we want to apply the Angstrom model to compute shortwave radiation.
 # In this case, we apply the Angstrom parameters that have been found De Bilt:
-param_a = 0.36 # valid for De Bilt
-param_b = 0.68 # valid for De Bilt
-debilt.disaggregate_radiation(method='pot_rad_via_ssd', angstr_a=param_a, 
-                                angstr_b=param_b)
+debilt.statistics.glob.angstroem_a = 0.36 # valid for De Bilt
+debilt.statistics.glob.angstroem_b = 0.68 # valid for De Bilt
+debilt.disaggregate_radiation(method='pot_rad_via_ssd')
 
 # Step 7: disaggregate precipitation
 debilt.disaggregate_precipitation(method='cascade')
