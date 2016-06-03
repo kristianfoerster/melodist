@@ -250,7 +250,7 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
     # aggregate to hourly time steps
     print('aggregating 0.25 hours to 1.0 hours...')
     vdn_025cs = np.cumsum(vdn_025)
-    vdn = np.zeros(np.floor(len(vdn_025)/4))
+    vdn = np.zeros(int(len(vdn_025)/4))
     for i in range(0,len(vdn)+1):
         #for first hour take 4th item
         if i==0:  
