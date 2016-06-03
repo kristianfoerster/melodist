@@ -21,7 +21,7 @@ A station statistics object can be generated in a similar manner. As station sta
 
 Statistics can be derived for each variable by calling the respective function of the statistics object `s.statistics`: `calc_wind_stats()`, `calc_humidity_stats()`, `calc_temperature_stats()`, `calc_precipitation_stats()`, and `calc_radiation_stats`.
 
-## Naming concention for dataframe columns
+## Naming convention for dataframe columns
 
 MELODIST expects exact naming conventions for the time series provided in pandas dataframes. Please find the specification of column names below:
 
