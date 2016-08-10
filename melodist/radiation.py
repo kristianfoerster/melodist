@@ -24,7 +24,6 @@
 ###############################################################################################################
 
 from __future__ import print_function, division, absolute_import
-from math import cos, sin, acos, pi
 import melodist.util
 import pandas as pd
 import numpy as np
@@ -94,55 +93,48 @@ def potential_radiation(dates, lon, lat, timezone):
     Returns:
         series of potential shortwave radiation
     """
-    
-
     solar_constant = 1367.
     days_per_year   = 365.25
     tropic_of_cancer = 0.41
     solstice = 173.0
     cloud_fraction = 0.
 
-    glob = pd.Series(index=dates)
+    dates = pd.DatetimeIndex(dates)
+    day_of_year = dates.dayofyear
 
-    for datetime in dates:
-        day_of_year = (datetime - pd.datetime(datetime.year, 1, 1)).days + 1
+    # compute solar decline in rad
+    solar_decline = tropic_of_cancer * np.cos(2.0 * np.pi * (day_of_year - solstice) / days_per_year)
 
-        # compute solar decline in rad
-        solar_decline = tropic_of_cancer * cos(2.0 * pi * (float(day_of_year) - solstice) / days_per_year)
+    # compute the sun hour angle in rad
+    standard_meridian = timezone * 15.
+    delta_lat_time = (lon - standard_meridian) * 24. / 360.
+    hour_angle = np.pi * (((dates.hour + dates.minute / 60. + delta_lat_time) / 12.) - 1.)
 
-        # compute the sun hour angle in rad
-        standard_meridian = timezone * 15.
-        delta_lat_time = (lon - standard_meridian) * 24. / 360.
-        hour_angle = np.pi * (((datetime.hour + datetime.minute / 60. + delta_lat_time) / 12.) - 1.)
+    # get solar zenith angle 
+    cos_solar_zenith = np.sin(solar_decline) * np.sin(np.deg2rad(lat)) + np.cos(solar_decline) * np.cos(np.deg2rad(lat)) * np.cos(hour_angle)
+    cos_solar_zenith = cos_solar_zenith.clip(min=0)
+    solar_zenith_angle = np.arccos(cos_solar_zenith)
 
-        # get solar zenit angle 
-        cos_solar_zenith = sin(solar_decline) * sin(np.deg2rad(lat)) + cos(solar_decline) * cos(np.deg2rad(lat)) * cos(hour_angle)
+    # compute transmissivities for direct and diffus radiation using cloud fraction
+    transmissivity_direct = (0.6 + 0.2 * cos_solar_zenith) * (1.0 - cloud_fraction)
+    transmissivity_diffuse = (0.3 + 0.1 * cos_solar_zenith) * cloud_fraction
 
-        if cos_solar_zenith < 0:
-            cos_solar_zenith = 0.0
+    # modify solar constant for eccentricity
+    beta = 2. * np.pi * (day_of_year / days_per_year)
+    radius_ratio = 1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta) + 0.000719 * np.cos(2. * beta) + 0.000077 * np.sin(2 * beta)
+    solar_constant_times_radius_ratio = solar_constant * radius_ratio
 
-        solar_zenith_angle = acos(cos_solar_zenith)
+    # get total shortwave radiation
+    direct_radiation = (solar_constant_times_radius_ratio * transmissivity_direct) * np.cos(solar_zenith_angle)
+    diffuse_radiation = solar_constant_times_radius_ratio * transmissivity_diffuse # * np.cos(solarZenitAngle) #?
 
-        # compute transmissivities for direct and diffus radiation using cloud fraction
-        transmissivity_direct = (0.6 + 0.2 * cos_solar_zenith) * (1.0 - cloud_fraction)
-        transmissivity_diffuse = (0.3 + 0.1 * cos_solar_zenith) * cloud_fraction
+    pos = direct_radiation < 0
+    diffuse_radiation[pos] = 0
+    direct_radiation[pos] = 0
 
-        # modify solar constant for eccentricity
-        beta = 2. * pi * (day_of_year / days_per_year)
-        radius_ratio = 1.00011 + 0.034221 * cos(beta) + 0.00128 * sin(beta) + 0.000719 * cos(2. * beta) + 0.000077 * sin(2 * beta)
-        solar_constant_times_radius_ratio = solar_constant * radius_ratio
+    glob = direct_radiation + diffuse_radiation
 
-        # get total shortwave radiation
-        direct_radiation = (solar_constant_times_radius_ratio * transmissivity_direct) * cos(solar_zenith_angle)
-        diffuse_radiation = solar_constant_times_radius_ratio * transmissivity_diffuse # * cos(solarZenitAngle) #?
-
-        if direct_radiation < 0:
-            diffuse_radiation = 0
-            direct_radiation = 0.
-
-        glob[datetime] = direct_radiation + diffuse_radiation
-
-    return glob
+    return pd.Series(index=dates, data=glob)
 
 
 def bristow_campbell(tmin, tmax, pot_rad_daily, A, C):
