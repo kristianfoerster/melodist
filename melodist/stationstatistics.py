@@ -115,19 +115,16 @@ class StationStatistics(object):
         day_length : Series, optional
             Day lengths as calculated by ``calc_sun_times``.
         """
+        pot_rad = melodist.potential_radiation(melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone)
+        pot_rad_daily = pot_rad.resample('D').mean()
+        obs_rad_daily = self.data.glob.resample('D').mean()
+
         if 'ssd' in data_daily and day_length is not None:
-            df = pd.DataFrame(data=dict(ssd=data_daily.ssd, day_length=day_length)).dropna(how='any')
-            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(df.index), self._lon, self._lat, self._timezone)
-            pot_rad_daily = pot_rad.resample('D').mean()
-            obs_rad_daily = self.data.glob.resample('D').mean()
             a, b = melodist.fit_angstroem_params(data_daily.ssd, day_length, pot_rad_daily, obs_rad_daily)
             self.glob.angstroem_a = a
             self.glob.angstroem_b = b
 
         if 'tmin' in data_daily and 'tmax' in data_daily:
-            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(df.index), self._lon, self._lat, self._timezone)
-            pot_rad_daily = pot_rad.resample('D').mean()
-            obs_rad_daily = self.data.glob.resample('D').mean()
             df = pd.DataFrame(
                 data=dict(
                     tmin=data_daily.tmin,
