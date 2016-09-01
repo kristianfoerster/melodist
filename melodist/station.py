@@ -108,7 +108,7 @@ class Station(object):
     @property
     def lon(self):
         """
-        Longitute of the station
+        Longitude of the station
         """
         return self._lon
 
@@ -120,7 +120,7 @@ class Station(object):
     @property
     def lat(self):
         """
-        Latitute of the station
+        Latitude of the station
         """
         return self._lat
 
