@@ -225,8 +225,18 @@ class Station(object):
 
             ``min_max``:
                 Calculates hourly humidity from observations of daily minimum and maximum humidity.
+
+            ``month_hour_precip_mean``:
+                Calculates hourly humidity from categorical [month, hour, precip(y/n)] mean values
+                derived from observations.
         """
-        self.data_disagg.hum = melodist.disaggregate_humidity(self.data_daily, temp=self.data_disagg.temp, method=method, **self.statistics.hum)
+        self.data_disagg.hum = melodist.disaggregate_humidity(
+            self.data_daily,
+            temp=self.data_disagg.temp,
+            precip=self.data_disagg.precip,
+            method=method,
+            **self.statistics.hum
+        )
 
     def disaggregate_temperature(self, method='sine', min_max_time='fix', mod_nighttime=False):
         """

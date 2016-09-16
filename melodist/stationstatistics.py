@@ -48,7 +48,7 @@ class StationStatistics(object):
 
         self.wind = Bunch(a=None, b=None, t_shift=None)
         self.precip = Bunch(months=None, stats=None)
-        self.hum = Bunch(a0=None, a1=None, kr=None)
+        self.hum = Bunch(a0=None, a1=None, kr=None, month_hour_precip_mean=None)
         self.temp = Bunch(max_delta=None)
         self.glob = Bunch(angstroem_a=0.25, angstroem_b=0.75, bristcamp_a=0.75, bristcamp_c=2.4)
 
@@ -90,11 +90,13 @@ class StationStatistics(object):
 
     def calc_humidity_stats(self):
         """
-        Calculates statistics in order to derive diurnal patterns of relative humidity (requires temperature data as well)        
+        Calculates statistics in order to derive diurnal patterns of relative humidity.
         """
         a1, a0 = melodist.calculate_dewpoint_regression(self.data, return_stats=False)
         self.hum.update(a0=a0, a1=a1)
         self.hum.kr = 12
+
+        self.hum.month_hour_precip_mean = melodist.calculate_month_hour_precip_mean(self.data)
 
     def calc_temperature_stats(self):
         """
