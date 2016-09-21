@@ -233,7 +233,6 @@ class Station(object):
         self.data_disagg.hum = melodist.disaggregate_humidity(
             self.data_daily,
             temp=self.data_disagg.temp,
-            precip=self.data_disagg.precip,
             method=method,
             **self.statistics.hum
         )

@@ -29,14 +29,13 @@ import melodist.util.util as util
 import numpy as np
 import pandas as pd
 
-def disaggregate_humidity(data_daily, method='equal', temp=None, precip=None, a0=None, a1=None, kr=None, month_hour_precip_mean=None):
+def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=None, kr=None, month_hour_precip_mean=None):
     """general function for humidity disaggregation
 
     Args:
         daily_data: daily values
         method: keyword specifying the disaggregation method to be used
         temp: hourly temperature time series (necessary for some methods)
-        precip: hourly precipitation time series (necessary for the `month_hour_precip_mean` method)
         kr: parameter for linear_dewpoint_variation method (6 or 12)
         month_hour_precip_mean: [month, hour, precip(y/n)] categorical mean values
 
@@ -88,11 +87,11 @@ def disaggregate_humidity(data_daily, method='equal', temp=None, precip=None, a0
 
         hum_disagg = hmax + (temp - tmin) / (tmax - tmin) * (hmin - hmax)
     elif method == 'month_hour_precip_mean':
-        assert precip is not None
         assert month_hour_precip_mean is not None
 
-        hum_disagg = pd.Series(index=precip.index)
-        hum_disagg[:] = month_hour_precip_mean.loc[zip(hum_disagg.index.month, hum_disagg.index.hour, precip > 0)].values
+        precip_equal = melodist.distribute_equally(data_daily.precip) # daily precipitation equally distributed to hourly values
+        hum_disagg = pd.Series(index=precip_equal.index)
+        hum_disagg[:] = month_hour_precip_mean.loc[zip(hum_disagg.index.month, hum_disagg.index.hour, precip_equal > 0)].values
 
     return hum_disagg.clip(0, 100)
 
