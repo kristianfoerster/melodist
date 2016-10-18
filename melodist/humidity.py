@@ -29,7 +29,7 @@ import melodist.util.util as util
 import numpy as np
 import pandas as pd
 
-def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=None, kr=None, month_hour_precip_mean=None):
+def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=None, kr=None, month_hour_precip_mean=None, preserve_daily_mean=False):
     """general function for humidity disaggregation
 
     Args:
@@ -38,6 +38,8 @@ def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=Non
         temp: hourly temperature time series (necessary for some methods)
         kr: parameter for linear_dewpoint_variation method (6 or 12)
         month_hour_precip_mean: [month, hour, precip(y/n)] categorical mean values
+        preserve_daily_mean: if True, correct the daily mean values of the disaggregated
+            data with the observed daily means.
 
     Returns:
         Disaggregated hourly values of relative humidity.
@@ -92,6 +94,12 @@ def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=Non
         precip_equal = melodist.distribute_equally(data_daily.precip) # daily precipitation equally distributed to hourly values
         hum_disagg = pd.Series(index=precip_equal.index)
         hum_disagg[:] = month_hour_precip_mean.loc[zip(hum_disagg.index.month, hum_disagg.index.hour, precip_equal > 0)].values
+
+    if preserve_daily_mean:
+        daily_mean_df = pd.DataFrame(data=dict(obs=data_daily.hum, disagg=hum_disagg.resample('D').mean()))
+        bias = melodist.util.distribute_equally(daily_mean_df.disagg - daily_mean_df.obs)
+        bias = bias.fillna(0)
+        hum_disagg -= bias
 
     return hum_disagg.clip(0, 100)
 

@@ -199,7 +199,7 @@ class Station(object):
         """
         self.data_disagg.wind = melodist.disaggregate_wind(self.data_daily.wind, method=method, **self.statistics.wind)
 
-    def disaggregate_humidity(self, method='equal'):
+    def disaggregate_humidity(self, method='equal', preserve_daily_mean=False):
         """
         Disaggregate relative humidity.
 
@@ -229,11 +229,15 @@ class Station(object):
             ``month_hour_precip_mean``:
                 Calculates hourly humidity from categorical [month, hour, precip(y/n)] mean values
                 derived from observations.
+
+        preserve_daily_mean : bool, optional
+            If True, correct the daily mean values of the disaggregated data with the observed daily means.
         """
         self.data_disagg.hum = melodist.disaggregate_humidity(
             self.data_daily,
             temp=self.data_disagg.temp,
             method=method,
+            preserve_daily_mean=preserve_daily_mean,
             **self.statistics.hum
         )
 
