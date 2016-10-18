@@ -57,7 +57,7 @@ def distribute_equally(daily_data, divide=False):
     index = hourly_index(daily_data.index)
     hourly_data = daily_data.reindex(index)
     hourly_data = hourly_data.groupby(hourly_data.index.day).transform(
-        lambda x: x.fillna(method='ffill'))
+        lambda x: x.fillna(method='ffill', limit=23))
 
     if divide:
         hourly_data /= 24
