@@ -340,10 +340,10 @@ class Station(object):
             self.sun_times,
             melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone),
             method=method,
-            angstr_a=self.statistics.glob.angstroem_a,
-            angstr_b=self.statistics.glob.angstroem_b,
-            bristcamp_a=self.statistics.glob.bristcamp_a,
-            bristcamp_c=self.statistics.glob.bristcamp_c
+            angstr_a=self.statistics.glob.angstroem.a,
+            angstr_b=self.statistics.glob.angstroem.b,
+            bristcamp_a=self.statistics.glob.bristcamp.a,
+            bristcamp_c=self.statistics.glob.bristcamp.c
         )
 
     def interpolate(self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs):

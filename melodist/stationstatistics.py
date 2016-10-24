@@ -50,7 +50,16 @@ class StationStatistics(object):
         self.precip = Bunch(months=None, stats=None)
         self.hum = Bunch(a0=None, a1=None, kr=None, month_hour_precip_mean=None)
         self.temp = Bunch(max_delta=None)
-        self.glob = Bunch(angstroem_a=0.25, angstroem_b=0.75, bristcamp_a=0.75, bristcamp_c=2.4)
+
+        angstroem_df = pd.DataFrame(index=np.arange(12) + 1, columns=['a', 'b'])
+        angstroem_df.a = 0.25
+        angstroem_df.b = 0.75
+
+        bristcamp_df = pd.DataFrame(index=np.arange(12) + 1, columns=['a', 'c'])
+        bristcamp_df.a = 0.75
+        bristcamp_df.c = 2.4
+
+        self.glob = Bunch(angstroem=angstroem_df, bristcamp=bristcamp_df)
 
     @property
     def data(self):
@@ -104,7 +113,7 @@ class StationStatistics(object):
         """
         self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
 
-    def calc_radiation_stats(self, data_daily, day_length=None):
+    def calc_radiation_stats(self, data_daily, day_length=None, how='all'):
         """
         Calculates statistics in order to derive solar radiation from sunshine duration or
         minimum/maximum temperature.
@@ -117,14 +126,33 @@ class StationStatistics(object):
         day_length : Series, optional
             Day lengths as calculated by ``calc_sun_times``.
         """
+        assert how in ('all', 'seasonal', 'monthly')
+
         pot_rad = melodist.potential_radiation(melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone)
         pot_rad_daily = pot_rad.resample('D').mean()
         obs_rad_daily = self.data.glob.resample('D').mean()
 
+        if how == 'all':
+            month_ranges = [np.arange(12) + 1]
+        elif how == 'seasonal':
+            month_ranges = [[3, 4, 5], [6, 7, 8], [9, 10, 11], [12, 1, 2]]
+        elif how == 'monthly':
+            month_ranges = zip(np.arange(12) + 1)
+
+        myisin = lambda s, v: pd.Series(s).isin(v).values
+        extract_months = lambda s, months: s[myisin(s.index.month, months)]
+
         if 'ssd' in data_daily and day_length is not None:
-            a, b = melodist.fit_angstroem_params(data_daily.ssd, day_length, pot_rad_daily, obs_rad_daily)
-            self.glob.angstroem_a = a
-            self.glob.angstroem_b = b
+            for months in month_ranges:
+                a, b = melodist.fit_angstroem_params(
+                    extract_months(data_daily.ssd, months),
+                    extract_months(day_length, months),
+                    extract_months(pot_rad_daily, months),
+                    extract_months(obs_rad_daily, months),
+                )
+
+                for month in months:
+                    self.glob.angstroem.loc[month] = a, b
 
         if 'tmin' in data_daily and 'tmax' in data_daily:
             df = pd.DataFrame(
@@ -135,9 +163,17 @@ class StationStatistics(object):
                     obs_rad=obs_rad_daily,
                 )
             ).dropna(how='any')
-            a, c = melodist.fit_bristow_campbell_params(df.tmin, df.tmax, df.pot_rad, df.obs_rad)
-            self.glob.bristcamp_a = a
-            self.glob.bristcamp_c = c
+
+            for months in month_ranges:
+                a, c = melodist.fit_bristow_campbell_params(
+                    extract_months(df.tmin, months),
+                    extract_months(df.tmax, months),
+                    extract_months(df.pot_rad, months),
+                    extract_months(df.obs_rad, months),
+                )
+
+                for month in months:
+                    self.glob.bristcamp.loc[month] = a, c
 
     def to_json(self, filename=None):
         """

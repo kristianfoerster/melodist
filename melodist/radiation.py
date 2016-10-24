@@ -170,6 +170,11 @@ def bristow_campbell(tmin, tmax, pot_rad_daily, A, C):
     B = 0.036 * np.exp(-0.154 * dT_m_avg[temp.index.month])
     B.index = temp.index
 
+    if isinstance(A, pd.Series):
+        months = temp.index.month
+        A = A.loc[months].values
+        C = C.loc[months].values
+
     transmissivity = A * (1 - np.exp(-B * dT**C))
     R0 = transmissivity * pot_rad_daily
 
@@ -222,7 +227,13 @@ def angstroem(ssd, day_length, pot_rad_daily, a, b):
     b : float
         Second parameter for the Angstroem model (originally 0.75).
     """
+    if isinstance(a, pd.Series):
+        months = ssd.index.month
+        a = a.loc[months].values
+        b = b.loc[months].values
+
     glob_day = (a + b * ssd / day_length) * pot_rad_daily
+
     return glob_day
 
 def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
