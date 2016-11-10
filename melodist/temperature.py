@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 
 def disaggregate_temperature(data_daily,
-                             method='sine',
+                             method='sine_min_max',
                              min_max_time='fix',
                              mod_nighttime=False,
                              max_delta=None,
@@ -50,6 +50,8 @@ def disaggregate_temperature(data_daily,
     """
 
     if method not in (
+        'sine_min_max',
+        'sine_mean',
         'sine',
         'mean_course',
     ):
@@ -57,7 +59,7 @@ def disaggregate_temperature(data_daily,
 
     temp_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
 
-    if method == 'sine':
+    if method in ('sine_min_max', 'sine_mean', 'sine'):
         # for this option assume time of minimum and maximum and fit cosine function through minimum and maximum temperatures
         hours_per_day = 24
         default_shift_hours = 2
@@ -78,6 +80,7 @@ def disaggregate_temperature(data_daily,
                 'max_val_before',
                 'max_val_cur',
                 'max_val_next',
+                'mean_val_cur',
             ]
         )
 
@@ -102,6 +105,7 @@ def disaggregate_temperature(data_daily,
 
         locdf.min_val_cur = data_daily.tmin
         locdf.max_val_cur = data_daily.tmax
+        locdf.mean_val_cur = data_daily.temp
         locdf.min_val_next = data_daily.tmin.shift(-1, 'D')
         locdf.max_val_next = data_daily.tmax.shift(-1, 'D')
         locdf.loc[locdf.index[-1], 'min_val_next'] = locdf.min_val_cur.iloc[-1]
@@ -124,19 +128,24 @@ def disaggregate_temperature(data_daily,
         max_val = locdf.max_val_cur.copy()
         max_val[max_val.index.hour < locdf.min_loc] = locdf.max_val_before
 
-        delta_val = max_val - min_val
-        v_trans = min_val + delta_val / 2.
         temp_disagg = pd.Series(index=min_val.index)
 
-        if mod_nighttime:
-            before_min = locdf.index.hour <= locdf.min_loc
-            between_min_max = (locdf.index.hour > locdf.min_loc) & (locdf.index.hour < locdf.max_loc)
-            after_max = locdf.index.hour >= locdf.max_loc
-            temp_disagg[before_min]      = v_trans + delta_val / 2. * np.cos(np.pi / (hours_per_day - (locdf.max_loc - locdf.min_loc)) * (hours_per_day - locdf.max_loc + locdf.index.hour))
-            temp_disagg[between_min_max] = v_trans + delta_val / 2. * np.cos(1.25 * np.pi + 0.75 * np.pi / (locdf.max_loc - locdf.min_loc) * (locdf.index.hour - locdf.min_loc))
-            temp_disagg[after_max]       = v_trans + delta_val / 2. * np.cos(np.pi / (hours_per_day - (locdf.max_loc - locdf.min_loc)) * (locdf.index.hour - locdf.max_loc))
-        else:
-            temp_disagg = v_trans + (delta_val / 2.) * np.cos(2 * np.pi / hours_per_day * (locdf.index.hour - locdf.max_loc))
+        if method in ('sine_min_max', 'sine'):
+            delta_val = max_val - min_val
+            v_trans = min_val + delta_val / 2.
+
+            if mod_nighttime:
+                before_min = locdf.index.hour <= locdf.min_loc
+                between_min_max = (locdf.index.hour > locdf.min_loc) & (locdf.index.hour < locdf.max_loc)
+                after_max = locdf.index.hour >= locdf.max_loc
+                temp_disagg[before_min]      = v_trans + delta_val / 2. * np.cos(np.pi / (hours_per_day - (locdf.max_loc - locdf.min_loc)) * (hours_per_day - locdf.max_loc + locdf.index.hour))
+                temp_disagg[between_min_max] = v_trans + delta_val / 2. * np.cos(1.25 * np.pi + 0.75 * np.pi / (locdf.max_loc - locdf.min_loc) * (locdf.index.hour - locdf.min_loc))
+                temp_disagg[after_max]       = v_trans + delta_val / 2. * np.cos(np.pi / (hours_per_day - (locdf.max_loc - locdf.min_loc)) * (locdf.index.hour - locdf.max_loc))
+            else:
+                temp_disagg[:] = v_trans + (delta_val / 2.) * np.cos(2 * np.pi / hours_per_day * (locdf.index.hour - locdf.max_loc))
+        elif method == 'sine_mean':
+            dtr = locdf.max_val_cur - locdf.min_val_cur
+            temp_disagg[:] = locdf.mean_val_cur + dtr / 2. * np.cos(2 * np.pi / hours_per_day * (locdf.index.hour - locdf.max_loc))
 
         polars = sun_times.daylength < daylength_thres
         if polars.sum() > 0:

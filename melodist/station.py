@@ -241,7 +241,7 @@ class Station(object):
             **self.statistics.hum
         )
 
-    def disaggregate_temperature(self, method='sine', min_max_time='fix', mod_nighttime=False):
+    def disaggregate_temperature(self, method='sine_min_max', min_max_time='fix', mod_nighttime=False):
         """
         Disaggregate air temperature.
 
@@ -250,8 +250,16 @@ class Station(object):
         method : str, optional
             Disaggregation method.
 
+            ``sine_min_max``
+                Hourly temperatures follow a sine function preserving daily minimum
+                and maximum values. (Default)
+
+            ``sine_mean``
+                Hourly temperatures follow a sine function preserving the daily mean
+                value and the diurnal temperature range.
+
             ``sine``
-                Hourly temperatures follow a sine function. (Default)
+                Same as ``sine_min_max``.
 
             ``mean_course``
                 Hourly temperatures follow an observed average course (calculated for each month).
