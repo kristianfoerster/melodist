@@ -253,6 +253,9 @@ class Station(object):
             ``sine``
                 Hourly temperatures follow a sine function. (Default)
 
+            ``mean_course``
+                Hourly temperatures follow an observed average course (calculated for each month).
+
         min_max_time : str, optional
             Method to determine the time of minimum and maximum temperature.
 
@@ -268,7 +271,15 @@ class Station(object):
         mod_nighttime : bool, optional
             Use linear interpolation between minimum and maximum temperature.
         """
-        self.data_disagg.temp = melodist.disaggregate_temperature(self.data_daily, method=method, min_max_time=min_max_time, max_delta=self.statistics.temp.max_delta, sun_times=self.sun_times, mod_nighttime=mod_nighttime)
+        self.data_disagg.temp = melodist.disaggregate_temperature(
+            self.data_daily,
+            method=method,
+            min_max_time=min_max_time,
+            max_delta=self.statistics.temp.max_delta,
+            mean_course=self.statistics.temp.mean_course,
+            sun_times=self.sun_times,
+            mod_nighttime=mod_nighttime
+        )
 
     def disaggregate_precipitation(self, method='equal', zerodiv='uniform', shift=0, master_precip=None):
         """

@@ -29,7 +29,13 @@ import melodist.util
 import numpy as np
 import pandas as pd
 
-def disaggregate_temperature(data_daily, method='sine', min_max_time='fix', mod_nighttime=False, max_delta=None, sun_times=None):
+def disaggregate_temperature(data_daily,
+                             method='sine',
+                             min_max_time='fix',
+                             mod_nighttime=False,
+                             max_delta=None,
+                             mean_course=None,
+                             sun_times=None):
     """The disaggregation function for temperature
 
     Parameters
@@ -45,6 +51,7 @@ def disaggregate_temperature(data_daily, method='sine', min_max_time='fix', mod_
 
     if method not in (
         'sine',
+        'mean_course',
     ):
         raise ValueError('Invalid option')
 
@@ -174,6 +181,15 @@ def disaggregate_temperature(data_daily, method='sine', min_max_time='fix', mod_
 
             temp_interp = temp_polars.interpolate(method='linear', limit=23)
             temp_disagg[temp_interp.index] = temp_interp
+    elif method == 'mean_course':
+        data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
+
+        df = pd.DataFrame(index=temp_disagg.index)
+        df['normval'] = mean_course.unstack().loc[zip(df.index.month, df.index.hour)].values
+        df['tmin'] = data_daily_as_hourly.tmin
+        df['tmax'] = data_daily_as_hourly.tmax
+
+        temp_disagg[:] = df.normval * (df.tmax - df.tmin) + df.tmin
 
     return temp_disagg
 
@@ -219,3 +235,14 @@ def get_shift_by_data(temp_hourly, lon, lat, time_zone):
     shift_max_month_mean = data_month_mean.transpose()
     
     return shift_max_month_mean #max_delta
+
+
+def calculate_monthly_temperature_course(temp_hourly):
+    df = temp_hourly.groupby([temp_hourly.index.month, temp_hourly.index.hour]).mean()
+    df = df.reset_index().pivot('level_1', 'level_0')
+    df.columns = df.columns.droplevel() # remove MultiIndex
+    df.columns.name = None
+    df.index.name = None
+    df = (df - df.min()) / (df.max() - df.min()) # normalize values to 0-1 range
+
+    return df
