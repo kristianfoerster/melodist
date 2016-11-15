@@ -330,7 +330,7 @@ class Station(object):
 
         self.data_disagg.precip = precip_disagg
 
-    def disaggregate_radiation(self, method='pot_rad'):
+    def disaggregate_radiation(self, method='pot_rad', pot_rad=None):
         """
         Disaggregate solar radiation.
 
@@ -350,14 +350,20 @@ class Station(object):
             ``pot_rad_via_bc``
                 Calculates potential clear-sky hourly radiation and scales it according to daily
                 minimum and maximum temperature.
+
+        pot_rad : Series, optional
+            Hourly values of potential solar radiation. If ``None``, calculated internally.
         """
         if self.sun_times is None:
             self.calc_sun_times()
 
+        if pot_rad is None:
+            pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
+
         self.data_disagg.glob = melodist.disaggregate_radiation(
             self.data_daily,
             self.sun_times,
-            melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone),
+            pot_rad,
             method=method,
             angstr_a=self.statistics.glob.angstroem.a,
             angstr_b=self.statistics.glob.angstroem.b,
