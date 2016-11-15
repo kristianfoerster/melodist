@@ -244,14 +244,3 @@ def get_shift_by_data(temp_hourly, lon, lat, time_zone):
     shift_max_month_mean = data_month_mean.transpose()
     
     return shift_max_month_mean #max_delta
-
-
-def calculate_monthly_temperature_course(temp_hourly):
-    df = temp_hourly.groupby([temp_hourly.index.month, temp_hourly.index.hour]).mean()
-    df = df.reset_index().pivot('level_1', 'level_0')
-    df.columns = df.columns.droplevel() # remove MultiIndex
-    df.columns.name = None
-    df.index.name = None
-    df = (df - df.min()) / (df.max() - df.min()) # normalize values to 0-1 range
-
-    return df

@@ -112,7 +112,7 @@ class StationStatistics(object):
         Calculates statistics in order to derive diurnal patterns of temperature
         """
         self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
-        self.temp.mean_course = melodist.calculate_monthly_temperature_course(self.data.temp)
+        self.temp.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.temp, normalize=True)
 
     def calc_radiation_stats(self, data_daily, day_length=None, how='all'):
         """

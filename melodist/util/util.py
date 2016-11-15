@@ -366,3 +366,15 @@ def daily_from_hourly(df):
     df_daily.index.name = None
     return df_daily
 
+
+def calculate_mean_daily_course_by_month(data_hourly, normalize=False):
+    df = data_hourly.groupby([data_hourly.index.month, data_hourly.index.hour]).mean()
+    df = df.reset_index().pivot('level_1', 'level_0')
+    df.columns = df.columns.droplevel() # remove MultiIndex
+    df.columns.name = None
+    df.index.name = None
+
+    if normalize:
+        df = (df - df.min()) / (df.max() - df.min()) # normalize values to 0-1 range
+
+    return df
