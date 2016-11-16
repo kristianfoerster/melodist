@@ -213,34 +213,14 @@ def get_shift_by_data(temp_hourly, lon, lat, time_zone):
     lon :             longitude in DezDeg
     time_zone:        timezone
     '''
-    #prepare a daily index 
-    days = temp_hourly.resample('D').max()
-    max_delta = days * np.nan
+    daily_index = temp_hourly.resample('D').mean().index
+    sun_times = melodist.util.get_sun_times(daily_index, lon, lat, time_zone)
 
-    sun_times = melodist.util.get_sun_times(days.index, lon, lat, time_zone)
-    
-    #get hourly data day by day
-    for index_d, row in days.iteritems():        
-        index = index_d.date().isoformat()
-        temp_h = temp_hourly[index]
-        
-        if temp_h.empty or temp_h.isnull().any(): # hasnans:
-            max_delta[index] = np.nan
-        else:
-            #get hour of max temp
-            max_temp = temp_h.idxmax().hour
-            
-            #get sun min/max loction (dez. h)
-            sun_maxLocation= (sun_times.sunnoon[index_d])
-            
-            #get delta
-            delta_max = max_temp - sun_maxLocation
-    
-            #write to daily pd df
-            max_delta[index] = delta_max
-        
-    months = max_delta.resample('M').mean()
-    data_month_mean = months.groupby(months.index.month).agg('mean')
-    shift_max_month_mean = data_month_mean.transpose()
-    
-    return shift_max_month_mean #max_delta
+    idxmax = temp_hourly.groupby(temp_hourly.index.date).idxmax()
+    idxmax.index = pd.to_datetime(idxmax.index)
+    max_temp_hour_obs = idxmax.dropna().apply(lambda d: d.hour)
+    max_temp_hour_pot = sun_times.sunnoon
+    max_delta = max_temp_hour_obs - max_temp_hour_pot
+    mean_monthly_delta = max_delta.groupby(max_delta.index.month).mean()
+
+    return mean_monthly_delta
