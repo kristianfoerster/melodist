@@ -54,6 +54,7 @@ def disaggregate_temperature(data_daily,
         'sine_mean',
         'sine',
         'mean_course_min_max',
+        'mean_course_mean',
     ):
         raise ValueError('Invalid option')
 
@@ -199,6 +200,13 @@ def disaggregate_temperature(data_daily,
         df['tmax'] = data_daily_as_hourly.tmax
 
         temp_disagg[:] = df.normval * (df.tmax - df.tmin) + df.tmin
+    elif method == 'mean_course_mean':
+        data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
+        dtr = data_daily_as_hourly.tmax - data_daily_as_hourly.tmin
+        mc = pd.Series(index=temp_disagg.index)
+        mean_course_zeromean = mean_course - mean_course.mean() # shift mean course so that the daily mean is 0
+        mc[:] = mean_course_zeromean.unstack().loc[zip(temp_disagg.index.month, temp_disagg.index.hour)].values
+        temp_disagg[:] = data_daily_as_hourly.temp + dtr * mc
 
     return temp_disagg
 

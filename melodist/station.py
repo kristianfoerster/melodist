@@ -265,6 +265,10 @@ class Station(object):
                 Hourly temperatures follow an observed average course (calculated for each month),
                 preserving daily minimum and maximum values.
 
+            ``mean_course_mean``
+                Hourly temperatures follow an observed average course (calculated for each month),
+                preserving the daily mean value and the diurnal temperature range.
+
         min_max_time : str, optional
             Method to determine the time of minimum and maximum temperature.
 
