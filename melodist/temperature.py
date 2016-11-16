@@ -53,7 +53,7 @@ def disaggregate_temperature(data_daily,
         'sine_min_max',
         'sine_mean',
         'sine',
-        'mean_course',
+        'mean_course_min_max',
     ):
         raise ValueError('Invalid option')
 
@@ -190,7 +190,7 @@ def disaggregate_temperature(data_daily,
 
             temp_interp = temp_polars.interpolate(method='linear', limit=23)
             temp_disagg[temp_interp.index] = temp_interp
-    elif method == 'mean_course':
+    elif method == 'mean_course_min_max':
         data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
 
         df = pd.DataFrame(index=temp_disagg.index)

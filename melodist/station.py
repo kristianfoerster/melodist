@@ -261,8 +261,9 @@ class Station(object):
             ``sine``
                 Same as ``sine_min_max``.
 
-            ``mean_course``
-                Hourly temperatures follow an observed average course (calculated for each month).
+            ``mean_course_min_max``
+                Hourly temperatures follow an observed average course (calculated for each month),
+                preserving daily minimum and maximum values.
 
         min_max_time : str, optional
             Method to determine the time of minimum and maximum temperature.
