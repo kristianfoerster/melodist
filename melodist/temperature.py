@@ -195,7 +195,7 @@ def disaggregate_temperature(data_daily,
         data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
 
         df = pd.DataFrame(index=temp_disagg.index)
-        df['normval'] = mean_course.unstack().loc[zip(df.index.month, df.index.hour)].values
+        df['normval'] = mean_course.unstack().loc[list(zip(df.index.month, df.index.hour))].values
         df['tmin'] = data_daily_as_hourly.tmin
         df['tmax'] = data_daily_as_hourly.tmax
 
@@ -205,7 +205,7 @@ def disaggregate_temperature(data_daily,
         dtr = data_daily_as_hourly.tmax - data_daily_as_hourly.tmin
         mc = pd.Series(index=temp_disagg.index)
         mean_course_zeromean = mean_course - mean_course.mean() # shift mean course so that the daily mean is 0
-        mc[:] = mean_course_zeromean.unstack().loc[zip(temp_disagg.index.month, temp_disagg.index.hour)].values
+        mc[:] = mean_course_zeromean.unstack().loc[list(zip(temp_disagg.index.month, temp_disagg.index.hour))].values
         temp_disagg[:] = data_daily_as_hourly.temp + dtr * mc
 
     return temp_disagg
