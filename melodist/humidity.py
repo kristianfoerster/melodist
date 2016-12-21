@@ -78,7 +78,7 @@ def disaggregate_humidity(data_daily, method='equal', temp=None, a0=None, a1=Non
 
         sat_vap_press_tdew = util.vapor_pressure(tdew, 100)
         sat_vap_press_t = util.vapor_pressure(temp, 100)
-        hum_disagg = 100 * sat_vap_press_tdew / sat_vap_press_t
+        hum_disagg = pd.Series(index=temp.index, data=100 * sat_vap_press_tdew / sat_vap_press_t)
     elif method == 'min_max':
         assert 'hum_min' in data_daily.columns and 'hum_max' in data_daily.columns, 'Minimum and maximum humidity must be present in data frame'
 
