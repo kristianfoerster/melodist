@@ -59,7 +59,7 @@ class StationStatistics(object):
         bristcamp_df.a = 0.75
         bristcamp_df.c = 2.4
 
-        self.glob = Bunch(angstroem=angstroem_df, bristcamp=bristcamp_df)
+        self.glob = Bunch(angstroem=angstroem_df, bristcamp=bristcamp_df, mean_course=None)
 
     @property
     def data(self):
@@ -114,14 +114,14 @@ class StationStatistics(object):
         self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
         self.temp.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.temp, normalize=True)
 
-    def calc_radiation_stats(self, data_daily, day_length=None, how='all'):
+    def calc_radiation_stats(self, data_daily=None, day_length=None, how='all'):
         """
         Calculates statistics in order to derive solar radiation from sunshine duration or
         minimum/maximum temperature.
 
         Parameters
         ----------
-        data_daily : DataFrame
+        data_daily : DataFrame, optional
             Daily data from the associated ``Station`` object.
 
         day_length : Series, optional
@@ -129,52 +129,55 @@ class StationStatistics(object):
         """
         assert how in ('all', 'seasonal', 'monthly')
 
-        pot_rad = melodist.potential_radiation(melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone)
-        pot_rad_daily = pot_rad.resample('D').mean()
-        obs_rad_daily = self.data.glob.resample('D').mean()
+        self.glob.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.glob)
 
-        if how == 'all':
-            month_ranges = [np.arange(12) + 1]
-        elif how == 'seasonal':
-            month_ranges = [[3, 4, 5], [6, 7, 8], [9, 10, 11], [12, 1, 2]]
-        elif how == 'monthly':
-            month_ranges = zip(np.arange(12) + 1)
+        if data_daily is not None:
+            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone)
+            pot_rad_daily = pot_rad.resample('D').mean()
+            obs_rad_daily = self.data.glob.resample('D').mean()
 
-        myisin = lambda s, v: pd.Series(s).isin(v).values
-        extract_months = lambda s, months: s[myisin(s.index.month, months)]
+            if how == 'all':
+                month_ranges = [np.arange(12) + 1]
+            elif how == 'seasonal':
+                month_ranges = [[3, 4, 5], [6, 7, 8], [9, 10, 11], [12, 1, 2]]
+            elif how == 'monthly':
+                month_ranges = zip(np.arange(12) + 1)
 
-        if 'ssd' in data_daily and day_length is not None:
-            for months in month_ranges:
-                a, b = melodist.fit_angstroem_params(
-                    extract_months(data_daily.ssd, months),
-                    extract_months(day_length, months),
-                    extract_months(pot_rad_daily, months),
-                    extract_months(obs_rad_daily, months),
-                )
+            myisin = lambda s, v: pd.Series(s).isin(v).values
+            extract_months = lambda s, months: s[myisin(s.index.month, months)]
 
-                for month in months:
-                    self.glob.angstroem.loc[month] = a, b
+            if 'ssd' in data_daily and day_length is not None:
+                for months in month_ranges:
+                    a, b = melodist.fit_angstroem_params(
+                        extract_months(data_daily.ssd, months),
+                        extract_months(day_length, months),
+                        extract_months(pot_rad_daily, months),
+                        extract_months(obs_rad_daily, months),
+                    )
 
-        if 'tmin' in data_daily and 'tmax' in data_daily:
-            df = pd.DataFrame(
-                data=dict(
-                    tmin=data_daily.tmin,
-                    tmax=data_daily.tmax,
-                    pot_rad=pot_rad_daily,
-                    obs_rad=obs_rad_daily,
-                )
-            ).dropna(how='any')
+                    for month in months:
+                        self.glob.angstroem.loc[month] = a, b
 
-            for months in month_ranges:
-                a, c = melodist.fit_bristow_campbell_params(
-                    extract_months(df.tmin, months),
-                    extract_months(df.tmax, months),
-                    extract_months(df.pot_rad, months),
-                    extract_months(df.obs_rad, months),
-                )
+            if 'tmin' in data_daily and 'tmax' in data_daily:
+                df = pd.DataFrame(
+                    data=dict(
+                        tmin=data_daily.tmin,
+                        tmax=data_daily.tmax,
+                        pot_rad=pot_rad_daily,
+                        obs_rad=obs_rad_daily,
+                    )
+                ).dropna(how='any')
 
-                for month in months:
-                    self.glob.bristcamp.loc[month] = a, c
+                for months in month_ranges:
+                    a, c = melodist.fit_bristow_campbell_params(
+                        extract_months(df.tmin, months),
+                        extract_months(df.tmax, months),
+                        extract_months(df.pot_rad, months),
+                        extract_months(df.obs_rad, months),
+                    )
+
+                    for month in months:
+                        self.glob.bristcamp.loc[month] = a, c
 
     def to_json(self, filename=None):
         """

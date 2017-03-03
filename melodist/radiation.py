@@ -34,7 +34,15 @@ This routine diaggregates daily values of global radiation data to hourly values
 """
 
 
-def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', angstr_a=0.25, angstr_b=0.5, bristcamp_a=0.75, bristcamp_c=2.4):
+def disaggregate_radiation(data_daily,
+                           sun_times=None,
+                           pot_rad=None,
+                           method='pot_rad',
+                           angstr_a=0.25,
+                           angstr_b=0.5,
+                           bristcamp_a=0.75,
+                           bristcamp_c=2.4,
+                           mean_course=None):
     """general function for radiation disaggregation
 
     Args:
@@ -44,18 +52,28 @@ def disaggregate_radiation(data_daily, sun_times, pot_rad, method='pot_rad', ang
         method: keyword specifying the disaggregation method to be used
         angstr_a: parameter a of the Angstrom model (intercept)
         angstr_b: parameter b of the Angstrom model (slope)
+        mean_course: monthly values of the mean hourly radiation course
         
     Returns:
         Disaggregated hourly values of shortwave radiation.
     """
     # check if disaggregation method has a valid value
-    if method not in ('pot_rad', 'pot_rad_via_ssd', 'pot_rad_via_bc'):
+    if method not in ('pot_rad', 'pot_rad_via_ssd', 'pot_rad_via_bc', 'mean_course'):
         raise ValueError('Invalid option')
 
     glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
+
+    if method == 'mean_course':
+        assert mean_course is not None
+
+        pot_rad = pd.Series(index=glob_disagg.index)
+        pot_rad[:] = mean_course.unstack().loc[list(zip(pot_rad.index.month, pot_rad.index.hour))].values
+    else:
+        assert pot_rad is not None
+
     pot_rad_daily = pot_rad.resample('D').mean()
 
-    if method == 'pot_rad':
+    if method in ('pot_rad', 'mean_course'):
         globalrad = data_daily.glob
     elif method == 'pot_rad_via_ssd':
         # in this case use the Angstrom model
