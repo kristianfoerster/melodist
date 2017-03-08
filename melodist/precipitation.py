@@ -1,27 +1,30 @@
 # -*- coding: utf-8 -*-
-###############################################################################################################
-# This file is part of MELODIST - MEteoroLOgical observation time series DISaggregation Tool                  #
-# a program to disaggregate daily values of meteorological variables to hourly values                         #
-#                                                                                                             #
-# Copyright (C) 2016  Florian Hanzer (1,2), Kristian Förster (1,2), Benjamin Winter (1,2), Thomas Marke (1)   #
-#                                                                                                             #
-# (1) Institute of Geography, University of Innsbruck, Austria                                                #
-# (2) alpS - Centre for Climate Change Adaptation, Innsbruck, Austria                                         #
-#                                                                                                             #
-# MELODIST is free software: you can redistribute it and/or modify                                            #
-# it under the terms of the GNU General Public License as published by                                        #
-# the Free Software Foundation, either version 3 of the License, or                                           #
-# (at your option) any later version.                                                                         #
-#                                                                                                             #
-# MELODIST is distributed in the hope that it will be useful,                                                 #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of                                              #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                                                #
-# GNU General Public License for more details.                                                                #
-#                                                                                                             #
-# You should have received a copy of the GNU General Public License                                           #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.                                       #
-#                                                                                                             #
-###############################################################################################################
+########################################################################
+# This file is part of MELODIST - MEteoroLOgical observation time      #
+# series DISaggregation Tool a program to disaggregate daily values    #
+# of meteorological variables to hourly values                         #
+#                                                                      #
+#                                                                      #
+# Copyright (C) 2016  Florian Hanzer (1,2), Kristian Förster (1,2),    #
+# Benjamin Winter (1,2), Thomas Marke (1)                              #
+#                                                                      #
+# (1) Institute of Geography, University of Innsbruck, Austria         #
+# (2) alpS - Centre for Climate Change Adaptation, Innsbruck, Austria  #
+#                                                                      #
+# MELODIST is free software: you can redistribute it and/or modify     #
+# it under the terms of the GNU General Public License as published by #
+# the Free Software Foundation, either version 3 of the License, or    #
+# (at your option) any later version.                                  #
+#                                                                      #
+# MELODIST is distributed in the hope that it will be useful,          #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of       #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         #
+# GNU General Public License for more details.                         #
+#                                                                      #
+# You should have received a copy of the GNU General Public License    #
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.#
+#                                                                      #
+########################################################################
 
 from __future__ import print_function, division, absolute_import
 
@@ -32,17 +35,25 @@ import melodist.util
 import numpy as np
 import pandas as pd
 
-def disagg_prec(dailyData, method='equal', cascade_options=None, hourly_data_obs=None, zerodiv="uniform", shift=0):
-    """The disaggregation function for precipitation
-    
+def disagg_prec(dailyData,
+                method='equal',
+                cascade_options=None,
+                hourly_data_obs=None,
+                zerodiv="uniform",
+                shift=0):
+    """The disaggregation function for precipitation.
+
     Parameters
     ----
-    dailyData :       daily data     
-    method :          method to dissaggregate 
-    cascade_options*: cascade object including statistical parameters for the cascade model
+    dailyData :       daily data
+    method :          method to dissaggregate
+    cascade_options*: cascade object including statistical parameters
+                      for the cascade model
     hourly_data_obs*: observed hourly data of master station
-    zerodiv*:         method to deal with zero division by key "uniform" --> uniform distribution
-    shift*:           shifts the precip data by shift (int) steps (eg +7 for 7:00 to 6:00)    
+    zerodiv*:         method to deal with zero division by key "uniform"
+                      --> uniform distribution
+    shift*:           shifts the precip data by shift (int) steps (eg +7
+                      for 7:00 to 6:00)
     """
 
     if method not in ('equal', 'cascade', 'masterstation'):
@@ -51,7 +62,7 @@ def disagg_prec(dailyData, method='equal', cascade_options=None, hourly_data_obs
     if method == 'equal':
         precip_disagg = melodist.distribute_equally(dailyData.precip, divide=True)
     elif method == 'masterstation':
-        precip_disagg = precip_master_station(dailyData, hourly_data_obs, zerodiv)       
+        precip_disagg = precip_master_station(dailyData, hourly_data_obs, zerodiv)
     elif method == 'cascade':
         assert cascade_options is not None
         precip_disagg = disagg_prec_cascade(dailyData, cascade_options, shift=shift)
@@ -59,15 +70,17 @@ def disagg_prec(dailyData, method='equal', cascade_options=None, hourly_data_obs
     return precip_disagg
 
 def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
-    """Precipitation disaggregation using the cascade model proposed by
-    Olsson (1998)
-    
+    """Precipitation disaggregation with cascade model (Olsson, 1998)
+
     Parameters
     ----
-    precip_daily :    daily data        
-    cascade_options*: cascade object including statistical parameters for the cascade model
-    shift:            shifts the precip data by shift (int) steps (eg +7 for 7:00 to 6:00)
-    test:             test mode, returns time series of each cascade level
+    precip_daily :    daily data
+    cascade_options*: cascade object including statistical parameters
+                      for the cascade model
+    shift:            shifts the precip data by shift (int) steps (eg +7
+                      for 7:00 to 6:00)
+    test:             test mode, returns time series of each cascade
+                      level
     """
 
     if len(precip_daily)  < 2:
@@ -77,12 +90,12 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
     precip_daily = precip_daily.copy()
     missing_days = precip_daily.index[precip_daily.isnull()]
     precip_daily[missing_days] = 0
-    
-    si = 5 # index of first level    
-    
+
+    si = 5 # index of first level
+
     # statistics for branching into two bins
     wxxcum = np.zeros((7,2,4))
-    
+
     if(isinstance(cascade_options, melodist.cascade.CascadeStatistics)):
         # this is the standard case considering one data set for all levels
         # get cumulative probabilities for branching
@@ -90,8 +103,8 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
         for k in range(0,7):
             wxxcum[k,:,:] = cascade_options.wxx[k,:,:]
             if k > 0:
-                wxxcum[k,:,:] = wxxcum[k-1,:,:] + wxxcum[k,:,:];        
-    elif(isinstance(cascade_options, list)):     
+                wxxcum[k,:,:] = wxxcum[k-1,:,:] + wxxcum[k,:,:];
+    elif(isinstance(cascade_options, list)):
         if(len(cascade_options) == 5):
             overwrite_stats = True
             list_casc = cascade_options
@@ -99,7 +112,7 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
             raise ValueError('Cascade statistics list must have 5 elements!')
     else:
         raise TypeError('cascade_options has invalid type')
-    
+
     # arrays for each level
     n = len(precip_daily)
     vdn1 = np.zeros(n*2)
@@ -128,7 +141,7 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
         elif l == 5:
             vdn_in  = vdn_out;
             vdn_out = vdn5;
-        
+
         si -= 1
         if(overwrite_stats):
             cascade_options = list_casc[si]
@@ -139,7 +152,7 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
             meanvol = cascade_options.threshold[0]
         else:
             meanvol = cascade_options.threshold[si]
-        
+
         # evaluate time step
         dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 3600 # hours
         print("disaggregating " + str(dt/2**(l-1)) + " hours to " + str(dt/2**l) + " hours...")
@@ -211,7 +224,7 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
                     # both boxes wet
                     # we need a new random number
                     rndw = np.random.random()
-                    
+
                     # guess w1:
                     for k in range(0,7):
                         if rndw <= wxxcum[k,belowabove,vbtype-1]:
@@ -246,20 +259,20 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
             vdn_025[j+m] = vdn_out[i] / 3.;
             #vtn_025(j+m) = vtn_out(i) - 2 * dt + m *dt;
         j = j + 3;
-    
+
     # aggregate to hourly time steps
     print('aggregating 0.25 hours to 1.0 hours...')
     vdn_025cs = np.cumsum(vdn_025)
     vdn = np.zeros(int(len(vdn_025)/4))
     for i in range(0,len(vdn)+1):
         #for first hour take 4th item
-        if i==0:  
+        if i==0:
             vdn[i] = vdn_025cs[3]
         #pass 1
         elif i==1:
             pass
-        
-        else: 
+
+        else:
             #>1 (starting with 2-1 = 1 item)
             vdn[i-1] = vdn_025cs[(i*4)-1] - vdn_025cs[(i*4)-5]
 
@@ -268,14 +281,14 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
     # set missing days to nan again:
     for date in missing_days:
         precip_hourly[precip_hourly.index.date == date.date()] = np.nan
-    
+
     #shifts the data by shift steps (fills with nan/cuts edge data )
     if shift != 0:
         precip_hourly = precip_hourly.shift(shift)
 
     # replace column
     print("done")
-    
+
     # return time series
     if test:
         return vdn1, vdn2, vdn3, vdn4, vdn5, vdn_025, precip_hourly
@@ -289,33 +302,34 @@ def precip_master_station(precip_daily, master_precip_hourly, zerodiv):
 
     Parameters
     ----
-    precip_daily :   daily data 
+    precip_daily :   daily data
     master_precip_hourly :  observed hourly data of the master station
-    zerodiv :        method to deal with zero division by key "uniform" --> uniform distribution
+    zerodiv :        method to deal with zero division by key "uniform"
+                     --> uniform distribution
     """
 
     precip_hourly = pd.Series(index=melodist.util.hourly_index(precip_daily.index))
-    
+
     # set some parameters for cosine function
     for index_d, precip in precip_daily.iteritems():
-        
+
         #get hourly data of the day
         index = index_d.date().isoformat()
         precip_h = master_precip_hourly[index]
-        
-        #calc rel values and multiply by daily sums    
-        #check for zero division    
-        if precip_h.sum() != 0 and precip_h.sum() != np.isnan(precip_h.sum()):            
+
+        #calc rel values and multiply by daily sums
+        #check for zero division
+        if precip_h.sum() != 0 and precip_h.sum() != np.isnan(precip_h.sum()):
             precip_h_rel = (precip_h / precip_h.sum()) * precip
-            
+
         else:
             #uniform option will preserve daily data by uniform distr
             if zerodiv == 'uniform':
                 precip_h_rel = (1/24) * precip
-    
+
             else:
                 precip_h_rel = 0
-                       
+
         #write the disaggregated day to data
         precip_hourly[index] = precip_h_rel
 
@@ -324,7 +338,7 @@ def precip_master_station(precip_daily, master_precip_hourly, zerodiv):
 
 def aggregate_precipitation(vec_data):
     """Aggregates highly resolved precipitation data and creates statistics
-    
+
         Args:
         vec_data: hourly values
 
@@ -497,7 +511,8 @@ def seasonal_subset(dataframe, months='all'):
     Parameters
     ----
     dataframe:
-    months:    Months to use for statistics, or 'all' for 1-12 (default='all')
+    months:    Months to use for statistics, or 'all' for 1-12
+               (default='all')
 
     '''
 
@@ -521,9 +536,13 @@ def build_casc(hourlyDataObs, months=None, avg_stats=True, percentile=50):
     Parameters
     ----
     hourlyDataObs : hourly obserevd data
-    months :        Months for each seasons to be used for statistics (array of numpy array, default=1-12, e.g., [np.arange(12) + 1])
-    avg_stats :     average statistics for all levels True/False (default=True)
-    percentile :    percentil for splitting the dataset in small and high intensities (default=50)
+    months :        Months for each seasons to be used for statistics
+                    (array of numpy array, default=1-12, e.g.,
+                    [np.arange(12) + 1])
+    avg_stats :     average statistics for all levels True/False
+                    (default=True)
+    percentile :    percentil for splitting the dataset in small and
+                    high intensities (default=50)
 
     Returns
     ----
