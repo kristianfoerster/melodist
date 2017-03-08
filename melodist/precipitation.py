@@ -44,16 +44,21 @@ def disagg_prec(dailyData,
     """The disaggregation function for precipitation.
 
     Parameters
-    ----
-    dailyData :       daily data
-    method :          method to dissaggregate
-    cascade_options*: cascade object including statistical parameters
-                      for the cascade model
-    hourly_data_obs*: observed hourly data of master station
-    zerodiv*:         method to deal with zero division by key "uniform"
-                      --> uniform distribution
-    shift*:           shifts the precip data by shift (int) steps (eg +7
-                      for 7:00 to 6:00)
+    ----------
+    dailyData : pd.Series
+        daily data
+    method : str
+        method to disaggregate
+    cascade_options : cascade object
+        including statistical parameters for the cascade model
+    hourly_data_obs : pd.Series
+        observed hourly data of master station
+    zerodiv : str
+        method to deal with zero division by key "uniform" --> uniform
+        distribution
+    shift : int
+        shifts the precipitation data by shift (int) steps (eg +7 for
+        7:00 to 6:00)
     """
 
     if method not in ('equal', 'cascade', 'masterstation'):
@@ -69,18 +74,23 @@ def disagg_prec(dailyData,
 
     return precip_disagg
 
-def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
+def disagg_prec_cascade(precip_daily,
+                        cascade_options,
+                        shift=0,
+                        test=False):
     """Precipitation disaggregation with cascade model (Olsson, 1998)
 
     Parameters
-    ----
-    precip_daily :    daily data
-    cascade_options*: cascade object including statistical parameters
-                      for the cascade model
-    shift:            shifts the precip data by shift (int) steps (eg +7
-                      for 7:00 to 6:00)
-    test:             test mode, returns time series of each cascade
-                      level
+    ----------
+    precip_daily : pd.Series
+        daily data
+    cascade_options : cascade object
+        including statistical parameters for the cascade model
+    shift : int
+        shifts the precipitation data by shift steps (eg +7 for 7:00 to
+        6:00)
+    test : bool
+        test mode, returns time series of each cascade level
     """
 
     if len(precip_daily)  < 2:
@@ -297,15 +307,20 @@ def disagg_prec_cascade(precip_daily, cascade_options,shift=0, test=False):
 
 ###############################################################################
 #disaggregate by master station
-def precip_master_station(precip_daily, master_precip_hourly, zerodiv):
+def precip_master_station(precip_daily,
+                          master_precip_hourly,
+                          zerodiv):
     """Disaggregate precipitation based on the patterns of a master station
 
     Parameters
-    ----
-    precip_daily :   daily data
-    master_precip_hourly :  observed hourly data of the master station
-    zerodiv :        method to deal with zero division by key "uniform"
-                     --> uniform distribution
+    -----------
+    precip_daily : pd.Series
+        daily data
+    master_precip_hourly :  pd.Series
+        observed hourly data of the master station
+    zerodiv : str
+        method to deal with zero division by key "uniform" --> uniform
+        distribution
     """
 
     precip_hourly = pd.Series(index=melodist.util.hourly_index(precip_daily.index))
@@ -339,11 +354,15 @@ def precip_master_station(precip_daily, master_precip_hourly, zerodiv):
 def aggregate_precipitation(vec_data):
     """Aggregates highly resolved precipitation data and creates statistics
 
-        Args:
-        vec_data: hourly values
+    Parameters
+    ----------
+    vec_data : pd.Series
+        hourly values
 
-    Returns:
-        cascade object representing statistics of the cascade model
+    Returns
+    -------
+    output : cascade object
+        representing statistics of the cascade model
     """
     cascade_opt = cascade.CascadeStatistics()
 
@@ -505,15 +524,15 @@ def aggregate_precipitation(vec_data):
     return cascade_opt, vdn
 
 
-def seasonal_subset(dataframe, months='all'):
-    '''get the data seasonal
+def seasonal_subset(dataframe,
+                    months='all'):
+    '''Get the seasonal data.
 
     Parameters
-    ----
-    dataframe:
-    months:    Months to use for statistics, or 'all' for 1-12
-               (default='all')
-
+    ----------
+    dataframe : pd.DataFrame
+    months: int,str
+        Months to use for statistics, or 'all' for 1-12 (default='all')
     '''
 
     if isinstance(months, str) and months == 'all':
@@ -530,23 +549,29 @@ def seasonal_subset(dataframe, months='all'):
     return df.sort_index()
 
 
-def build_casc(hourlyDataObs, months=None, avg_stats=True, percentile=50):
-    '''builds the cascade satistics of the observed data for fallowing disaggregation
+def build_casc(hourlyDataObs,
+               months=None,
+               avg_stats=True,
+               percentile=50):
+    '''Builds the cascade statistics of observed data for disaggregation
 
     Parameters
-    ----
-    hourlyDataObs : hourly obserevd data
-    months :        Months for each seasons to be used for statistics
-                    (array of numpy array, default=1-12, e.g.,
-                    [np.arange(12) + 1])
-    avg_stats :     average statistics for all levels True/False
-                    (default=True)
-    percentile :    percentil for splitting the dataset in small and
-                    high intensities (default=50)
+    -----------
+    hourlyDataObs : pd.Series
+        hourly observed data
+    months : numpy array of ints
+        Months for each seasons to be used for statistics (array of
+        numpy array, default=1-12, e.g., [np.arange(12) + 1])
+    avg_stats : bool
+        average statistics for all levels True/False (default=True)
+    percentile : int,float
+        percentile for splitting the dataset in small and high
+        intensities (default=50)
 
     Returns
-    ----
-    list_seasonal_casc : list holding the results
+    -------
+    list_seasonal_casc :
+        list holding the results
     '''
 
     list_seasonal_casc = list()
