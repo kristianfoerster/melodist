@@ -5,8 +5,8 @@
 # of meteorological variables to hourly values                         #
 #                                                                      #
 #                                                                      #
-# Copyright (C) 2016  Florian Hanzer (1,2), Kristian Förster (1,2),    #
-# Benjamin Winter (1,2), Thomas Marke (1)                              #
+# Copyright (C) 2016  Florian Hanzer (1, 2), Kristian Förster (1, 2),  #
+# Benjamin Winter (1, 2), Thomas Marke (1)                             #
 #                                                                      #
 # (1) Institute of Geography, University of Innsbruck, Austria         #
 # (2) alpS - Centre for Climate Change Adaptation, Innsbruck, Austria  #
@@ -28,12 +28,14 @@
 
 from __future__ import print_function, division, absolute_import
 
-from . import cascade
+import numpy as np
+import pandas as pd
+
 import copy
 import melodist
 import melodist.util
-import numpy as np
-import pandas as pd
+
+from . import cascade
 
 def disagg_prec(dailyData,
                 method='equal',
@@ -65,12 +67,17 @@ def disagg_prec(dailyData,
         raise ValueError('Invalid option')
 
     if method == 'equal':
-        precip_disagg = melodist.distribute_equally(dailyData.precip, divide=True)
+        precip_disagg = melodist.distribute_equally(dailyData.precip,
+                                                    divide=True)
     elif method == 'masterstation':
-        precip_disagg = precip_master_station(dailyData, hourly_data_obs, zerodiv)
+        precip_disagg = precip_master_station(dailyData,
+                                              hourly_data_obs,
+                                              zerodiv)
     elif method == 'cascade':
         assert cascade_options is not None
-        precip_disagg = disagg_prec_cascade(dailyData, cascade_options, shift=shift)
+        precip_disagg = disagg_prec_cascade(dailyData,
+                                            cascade_options,
+                                            shift=shift)
 
     return precip_disagg
 
@@ -93,7 +100,7 @@ def disagg_prec_cascade(precip_daily,
         test mode, returns time series of each cascade level
     """
 
-    if len(precip_daily)  < 2:
+    if len(precip_daily) < 2:
         raise ValueError('Input data must have at least two elements.')
 
     # set missing values to zero:
@@ -104,18 +111,18 @@ def disagg_prec_cascade(precip_daily,
     si = 5 # index of first level
 
     # statistics for branching into two bins
-    wxxcum = np.zeros((7,2,4))
+    wxxcum = np.zeros((7, 2, 4))
 
-    if(isinstance(cascade_options, melodist.cascade.CascadeStatistics)):
+    if isinstance(cascade_options, melodist.cascade.CascadeStatistics):
         # this is the standard case considering one data set for all levels
         # get cumulative probabilities for branching
         overwrite_stats = False
-        for k in range(0,7):
-            wxxcum[k,:,:] = cascade_options.wxx[k,:,:]
+        for k in range(0, 7):
+            wxxcum[k, :, :] = cascade_options.wxx[k, :, :]
             if k > 0:
-                wxxcum[k,:,:] = wxxcum[k-1,:,:] + wxxcum[k,:,:];
-    elif(isinstance(cascade_options, list)):
-        if(len(cascade_options) == 5):
+                wxxcum[k, :, :] = wxxcum[k-1, :, :] + wxxcum[k, :, :]
+    elif isinstance(cascade_options, list):
+        if len(cascade_options) == 5:
             overwrite_stats = True
             list_casc = cascade_options
         else:
@@ -132,33 +139,40 @@ def disagg_prec_cascade(precip_daily,
     vdn5 = np.zeros(n*32)
 
     # class boundaries for histograms
-    wclassbounds = np.array([0.0,0.1429,0.2857,0.4286,0.5714,0.7143,0.8571,1.0]) #np.linspace(0,1,num=8)
+    wclassbounds = np.array([0.0,
+                             0.1429,
+                             0.2857,
+                             0.4286,
+                             0.5714,
+                             0.7143,
+                             0.8571,
+                             1.0]) #np.linspace(0, 1, num=8)
 
     # disaggregation for each level
-    for l in range(1,6):
+    for l in range(1, 6):
         if l == 1:
-            vdn_in  = precip_daily
-            vdn_out = vdn1;
+            vdn_in = precip_daily
+            vdn_out = vdn1
         elif l == 2:
-            vdn_in  = vdn_out;
-            vdn_out = vdn2;
+            vdn_in = vdn_out
+            vdn_out = vdn2
         elif l == 3:
-            vdn_in  = vdn_out;
-            vdn_out = vdn3;
+            vdn_in = vdn_out
+            vdn_out = vdn3
         elif l == 4:
-            vdn_in  = vdn_out;
-            vdn_out = vdn4;
+            vdn_in = vdn_out
+            vdn_out = vdn4
         elif l == 5:
-            vdn_in  = vdn_out;
-            vdn_out = vdn5;
+            vdn_in = vdn_out
+            vdn_out = vdn5
 
         si -= 1
-        if(overwrite_stats):
+        if overwrite_stats:
             cascade_options = list_casc[si]
-            for k in range(0,7):
-                wxxcum[k,:,:] = cascade_options.wxx[k,:,:]
+            for k in range(0, 7):
+                wxxcum[k, :, :] = cascade_options.wxx[k, :, :]
                 if k > 0:
-                    wxxcum[k,:,:] = wxxcum[k-1,:,:] + wxxcum[k,:,:]
+                    wxxcum[k, :, :] = wxxcum[k-1, :, :] + wxxcum[k, :, :]
             meanvol = cascade_options.threshold[0]
         else:
             meanvol = cascade_options.threshold[si]
@@ -180,12 +194,12 @@ def disagg_prec_cascade(precip_daily,
             # it's raining now?
             if vdn_in[i] > 0:
                 # determine type of box
-                if i==0: # only starting or isolated
+                if i == 0: # only starting or isolated
                     if vdn_in[i+1] > 0:
                         vbtype = cascade.BoxTypes.starting
                     else:
                         vbtype = cascade.BoxTypes.isolated
-                elif i==len(vdn_in)-1: # only ending or isolated
+                elif i == len(vdn_in)-1: # only ending or isolated
                     if vdn_in[i-1] > 0:
                         vbtype = cascade.BoxTypes.ending
                     else:
@@ -198,10 +212,10 @@ def disagg_prec_cascade(precip_daily,
                         vbtype = cascade.BoxTypes.starting
 
                     if vdn_in[i-1] > 0 and vdn_in[i+1] > 0:
-                        vbtype = cascade.BoxTypes.enclosed;
+                        vbtype = cascade.BoxTypes.enclosed
 
                     if vdn_in[i-1] > 0 and vdn_in[i+1] == 0:
-                        vbtype = cascade.BoxTypes.ending;
+                        vbtype = cascade.BoxTypes.ending
 
                 # above or below mean?
                 if vdn_in[i] > meanvol:
@@ -210,10 +224,10 @@ def disagg_prec_cascade(precip_daily,
                     belowabove = 0 # below mean
 
                 #
-                p = np.zeros((3,1))
-                p[0] = cascade_options.p01[belowabove,vbtype-1] # index changed!
-                p[1] = cascade_options.p10[belowabove,vbtype-1]
-                p[2] = cascade_options.pxx[belowabove,vbtype-1]
+                p = np.zeros((3, 1))
+                p[0] = cascade_options.p01[belowabove, vbtype-1] # index changed!
+                p[1] = cascade_options.p10[belowabove, vbtype-1]
+                p[2] = cascade_options.pxx[belowabove, vbtype-1]
 
                 # draw a random number to determine the braching type
                 rndp = np.random.random()
@@ -236,13 +250,13 @@ def disagg_prec_cascade(precip_daily,
                     rndw = np.random.random()
 
                     # guess w1:
-                    for k in range(0,7):
-                        if rndw <= wxxcum[k,belowabove,vbtype-1]:
+                    for k in range(0, 7):
+                        if rndw <= wxxcum[k, belowabove, vbtype-1]:
                             w1 = wclassbounds[k+1] - 1./14. # class center
                             break
 
                     vdn_out[j] = w1 * vdn_in[i]
-                    j = j + 1;
+                    j = j + 1
                     vdn_out[j] = (1. - w1) * vdn_in[i]
                     j = j + 1
 
@@ -253,33 +267,33 @@ def disagg_prec_cascade(precip_daily,
             else:
                 # add two dry boxes
                 vdn_out[j] = 0.0
-                j = j + 1;
+                j = j + 1
                 vdn_out[j] = 0.0
-                j = j + 1;
+                j = j + 1
 
 
     # uniformly disaggregate 0.75 h values to 0.25 h values
     print('disaggregating 0.75 hours to 0.25 hours... (uniform)')
-    vdn_025 = np.zeros(len(vdn_out)*3);
-    # vtn_025 = zeros(length(vdn_out)*3,1);
-    # dt = (vtn_out(2) - vtn_out(1))/3;
-    j = 0;
-    for i in range (0,len(vdn_out)):
-        for m in range(0,3):
-            vdn_025[j+m] = vdn_out[i] / 3.;
-            #vtn_025(j+m) = vtn_out(i) - 2 * dt + m *dt;
-        j = j + 3;
+    vdn_025 = np.zeros(len(vdn_out)*3)
+    # vtn_025 = zeros(length(vdn_out)*3, 1)
+    # dt = (vtn_out(2) - vtn_out(1))/3
+    j = 0
+    for i in range(0, len(vdn_out)):
+        for m in range(0, 3):
+            vdn_025[j+m] = vdn_out[i] / 3.
+            #vtn_025(j+m) = vtn_out(i) - 2 * dt + m *dt
+        j = j + 3
 
     # aggregate to hourly time steps
     print('aggregating 0.25 hours to 1.0 hours...')
     vdn_025cs = np.cumsum(vdn_025)
     vdn = np.zeros(int(len(vdn_025)/4))
-    for i in range(0,len(vdn)+1):
+    for i in range(0, len(vdn)+1):
         #for first hour take 4th item
-        if i==0:
+        if i == 0:
             vdn[i] = vdn_025cs[3]
         #pass 1
-        elif i==1:
+        elif i == 1:
             pass
 
         else:
@@ -376,19 +390,19 @@ def aggregate_precipitation(vec_data):
 
     # length of input time series
     n_in = len(vec_data)
-    n_out = np.floor(n_in/2);
+    n_out = np.floor(n_in/2)
 
     # alternative:
     # 1st step: new time series
     vec_time = vec_data.index
-    vdn0=[]
-    vtn0=[]
+    vdn0 = []
+    vtn0 = []
     j = 0
-    for i in range(0,n_in):
-        if(np.mod(i,2)!=0):
+    for i in range(0, n_in):
+        if np.mod(i, 2) != 0:
             vdn0.append(vec_data.precip[i-1] + vec_data.precip[i])
             vtn0.append(vec_time[i])
-            j=j+1
+            j = j+1
 
     vdn = pd.DataFrame(index=vtn0, data={'precip':vdn0})
 
@@ -398,22 +412,35 @@ def aggregate_precipitation(vec_data):
     #print('n_in='+str(n_in)+', n_out=' + str(n_out))
 
     # series of box types:
-    vbtype = np.zeros((n_out,), dtype=np.int)
+    vbtype = np.zeros((n_out, ), dtype=np.int)
 
     # fields for empirical probabilities
     # counts
-    nb  = np.zeros((2,4))
-    nbxx  = np.zeros((2,4))
+    nb = np.zeros((2, 4))
+    nbxx = np.zeros((2, 4))
 
     # class boundaries for histograms
-    # wclassbounds = np.linspace(0,1,num=8)
-    wlower = np.array([0,0.1429,0.2857,0.4286,0.5714,0.7143,0.8571]) # wclassbounds[0:7]
-    wupper = np.array([0.1429,0.2857,0.4286,0.5714,0.7143,0.8571,1.0]) # wclassbounds[1:8]
+    # wclassbounds = np.linspace(0, 1, num=8)
+    wlower = np.array([0,
+                       0.1429,
+                       0.2857,
+                       0.4286,
+                       0.5714,
+                       0.7143,
+                       0.8571]) # wclassbounds[0:7]
+    wupper = np.array([0.1429,
+                       0.2857,
+                       0.4286,
+                       0.5714,
+                       0.7143,
+                       0.8571,
+                       1.0]) # wclassbounds[1:8]
 
     # evaluate mean rainfall intensity for wet boxes
     # these values should be determined during the aggregation phase!!!!!
     # mean volume threshold
-    meanvol = np.percentile(vdn.precip[vdn.precip>0.], cascade_opt.percentile) # np.mean(vdn.precip[vdn.precip>0.])
+    meanvol = np.percentile(vdn.precip[vdn.precip > 0.],
+                            cascade_opt.percentile) # np.mean(vdn.precip[vdn.precip>0.])
     cascade_opt.threshold = np.array([meanvol])
 
     # 2nd step: classify boxes at the upper level
@@ -442,30 +469,30 @@ def aggregate_precipitation(vec_data):
             vbtype[i] = cascade.BoxTypes.dry   # no rain
 
     # 3rd step: examine branching
-    j=0
+    j = 0
     for i in range(0, n_in):
-        if np.mod(i,2) != 0:
+        if np.mod(i, 2) != 0:
             if vdn.precip[j] > 0:
                 if vdn.precip[j] > meanvol:
                     belowabove = 1 # above mean
                 else:
                     belowabove = 0 # below mean
 
-                nb[belowabove,vbtype[j]-1] += 1
+                nb[belowabove, vbtype[j]-1] += 1
 
                 if vec_data.precip[i-1] > 0 and vec_data.precip[i] == 0:
                     # P(1/0)
-                    cascade_opt.p10[belowabove,vbtype[j]-1] += 1
+                    cascade_opt.p10[belowabove, vbtype[j]-1] += 1
 
                 if vec_data.precip[i-1] == 0 and vec_data.precip[i] > 0:
                     # P(0/1)
-                    cascade_opt.p01[belowabove,vbtype[j]-1] += 1
+                    cascade_opt.p01[belowabove, vbtype[j]-1] += 1
 
                 if vec_data.precip[i-1] > 0 and vec_data.precip[i] > 0:
                     # P(x/x)
-                    cascade_opt.pxx[belowabove,vbtype[j]-1] += 1
+                    cascade_opt.pxx[belowabove, vbtype[j]-1] += 1
 
-                    nbxx[belowabove,vbtype[j]-1] += 1
+                    nbxx[belowabove, vbtype[j]-1] += 1
 
                     # weights
                     r1 = vec_data.precip[i-1]
@@ -475,31 +502,37 @@ def aggregate_precipitation(vec_data):
 
                     # Test
                     if abs(r1+r2-vdn.precip[j]) > 1.E-3:
-                        print('i='+str(i)+', j='+str(j)+', r1='+str(r1)+", r2="+str(r2)+", Summe="+str(vdn.precip[j]))
+                        print('i=' + str(i) + ', j=' + str(j) +
+                              ', r1=' + str(r1) + ", r2=" + str(r2) +
+                              ", Summe=" + str(vdn.precip[j]))
                         print(vec_data.index[i])
                         print(vdn.index[j])
                         print('error')
                         return cascade_opt, vdn
 
-                    for k in range(0,7):
+                    for k in range(0, 7):
                         if wxxval > wlower[k] and wxxval <= wupper[k]:
-                            cascade_opt.wxx[k,belowabove,vbtype[j]-1] += 1
+                            cascade_opt.wxx[k, belowabove, vbtype[j]-1] += 1
                             break
             j = j + 1
 
     # 4th step: transform counts to percentages
-    cascade_opt.p01 = cascade_opt.p01 / nb;
-    cascade_opt.p10 = cascade_opt.p10 / nb;
-    cascade_opt.pxx = cascade_opt.pxx / nb;
+    cascade_opt.p01 = cascade_opt.p01 / nb
+    cascade_opt.p10 = cascade_opt.p10 / nb
+    cascade_opt.pxx = cascade_opt.pxx / nb
 
-    for k in range(0,7):
-        cascade_opt.wxx[k,:,:] = cascade_opt.wxx[k,:,:] / nbxx[:,:]
+    for k in range(0, 7):
+        cascade_opt.wxx[k, :, :] = cascade_opt.wxx[k, :, :] / nbxx[:, :]
 
     # In some cases, the time series are too short for deriving statistics.
 
-    if np.isnan(cascade_opt.p01).any() or np.isnan(cascade_opt.p10).any() or np.isnan(cascade_opt.pxx).any():
+    if (np.isnan(cascade_opt.p01).any() or
+            np.isnan(cascade_opt.p10).any() or
+            np.isnan(cascade_opt.pxx).any()):
         print("ERROR (branching probabilities):")
-        print("Invalid statistics. Default values will be returned. Try to use longer time series or apply statistics derived for another station.")
+        print("Invalid statistics. Default values will be returned. "
+              "Try to use longer time series or apply statistics "
+              "derived for another station.")
         cascade_opt.fill_with_sample_data()
 
     # For some box types, the corresponding probabilities might yield nan.
@@ -507,14 +540,17 @@ def aggregate_precipitation(vec_data):
     # valid values for disaggregation.
     if np.isnan(cascade_opt.wxx).any():
         print("Warning (weighting probabilities):")
-        print("The derived cascade statistics are not valid as some probabilities are undefined! ", end="")
-        print("Try to use longer time series that might be more appropriate for deriving statistics. ", end="")
-        print("As a workaround, default values according to equally distributed probabilities ", end="")
+        print("The derived cascade statistics are not valid as some "
+              "probabilities are undefined! ", end="")
+        print("Try to use longer time series that might be more "
+              "appropriate for deriving statistics. ", end="")
+        print("As a workaround, default values according to equally "
+              "distributed probabilities ", end="")
         print("will be applied...", end="")
         cascade_opt.wxx[np.isnan(cascade_opt.wxx)] = 1.0 / 7.0
-        wxx = np.zeros((2,4))
-        for k in range(0,7):
-            wxx[:,:] += cascade_opt.wxx[k,:,:]
+        wxx = np.zeros((2, 4))
+        for k in range(0, 7):
+            wxx[:, :] += cascade_opt.wxx[k, :, :]
         if wxx.any() > 1.001 or wxx.any() < 0.999:
             print("failed! Using default values!")
             cascade_opt.fill_with_sample_data()
@@ -531,7 +567,7 @@ def seasonal_subset(dataframe,
     Parameters
     ----------
     dataframe : pd.DataFrame
-    months: int,str
+    months: int, str
         Months to use for statistics, or 'all' for 1-12 (default='all')
     '''
 
@@ -564,7 +600,7 @@ def build_casc(hourlyDataObs,
         numpy array, default=1-12, e.g., [np.arange(12) + 1])
     avg_stats : bool
         average statistics for all levels True/False (default=True)
-    percentile : int,float
+    percentile : int, float
         percentile for splitting the dataset in small and high
         intensities (default=50)
 
@@ -581,18 +617,18 @@ def build_casc(hourlyDataObs,
 
     # Parameter estimation for each season
     for cur_months in months:
-        vdn = seasonal_subset(hourlyDataObs,cur_months)
-        if(len(hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)]) > 0):
-            hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)]=0
+        vdn = seasonal_subset(hourlyDataObs, cur_months)
+        if len(hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)]) > 0:
+            hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)] = 0
 
         casc_opt = melodist.cascade.CascadeStatistics()
         casc_opt.percentile = percentile
         list_casc_opt = list()
         thresholds = np.array([0., 0., 0., 0., 0.])
         count = 0
-        for i in range(0,5):
+        for i in range(0, 5):
             #aggregate the data
-            casc_opt_i,vdn = aggregate_precipitation(vdn)
+            casc_opt_i, vdn = aggregate_precipitation(vdn)
             thresholds[i] = casc_opt_i.threshold
             copy_of_casc_opt_i = copy.copy(casc_opt_i)
             list_casc_opt.append(copy_of_casc_opt_i)
@@ -604,7 +640,7 @@ def build_casc(hourlyDataObs,
         casc_opt.threshold = thresholds
 
         # statistics object
-        if(avg_stats):
+        if avg_stats:
             # in this case, the average statistics will be applied for all levels likewise
             stat_obj = casc_opt
         else:
