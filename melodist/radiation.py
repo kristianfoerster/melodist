@@ -118,7 +118,9 @@ def potential_radiation(dates, lon, lat, timezone):
     cloud_fraction = 0.
 
     dates = pd.DatetimeIndex(dates)
-    day_of_year = dates.dayofyear
+    dates_hour = np.array(dates.hour)
+    dates_minute = np.array(dates.minute)
+    day_of_year = np.array(dates.dayofyear)
 
     # compute solar decline in rad
     solar_decline = tropic_of_cancer * np.cos(2.0 * np.pi * (day_of_year - solstice) / days_per_year)
@@ -126,7 +128,7 @@ def potential_radiation(dates, lon, lat, timezone):
     # compute the sun hour angle in rad
     standard_meridian = timezone * 15.
     delta_lat_time = (lon - standard_meridian) * 24. / 360.
-    hour_angle = np.pi * (((dates.hour + dates.minute / 60. + delta_lat_time) / 12.) - 1.)
+    hour_angle = np.pi * (((dates_hour + dates_minute / 60. + delta_lat_time) / 12.) - 1.)
 
     # get solar zenith angle 
     cos_solar_zenith = np.sin(solar_decline) * np.sin(np.deg2rad(lat)) + np.cos(solar_decline) * np.cos(np.deg2rad(lat)) * np.cos(hour_angle)
