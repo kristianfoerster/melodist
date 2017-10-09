@@ -146,7 +146,7 @@ def read_dwd(filename, metadata, mode="d", skip_last=True):
                    'LUFTTEMPERATUR_MINIMUM':'tmin',   #no spec
                    'LUFTTEMPERATUR_MAXIMUM':'tmax',   #no spec
                    'NIEDERSCHLAGSHOEHE':'precip',
-                   'XXXXXXX':'glob',     #no spec
+                   'GLOBAL_KW_J':'glob',     #no spec
                    'REL_FEUCHTE':'hum',
                    'WINDGESCHWINDIGKEIT':'wind',
                    'SONNENSCHEINDAUER':'sun_h'
