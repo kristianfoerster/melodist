@@ -107,3 +107,8 @@ Since MELODIST is based on pandas, numerous ways to import and export pandas dat
 
 ## Literature
 Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.1), *Geosci. Model Dev.*, 9, 2315-2333, [doi:10.5194/gmd-9-2315-2016](https://doi.org/10.5194/gmd-9-2315-2016), 2016. 
+
+## Version history
+
+* 0.1.1 (03 Jun 2016): data type corrections in order to avoid conversion warnings, new functions for the estimation of Angstrom and Bristow-Campbell parameters, handling of gaps in daily data fixed, speed-up of radiation computations, updates to example.py, pandas 0.18 API compatibility
+* 0.1.0 (01 Mar 2016): First version of MELODIST
