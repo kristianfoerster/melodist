@@ -9,15 +9,21 @@ An example file (example.py) is provided along the package itself. This example 
 ## Station object:
 In the framework of MELODIST a station object includes all relevant information including metadata and time series. A station is generated using the constructor method:
 
-    s = melodist.Station(lon=longitude, lat=latitude, timezone=timezone)
+```python
+s = melodist.Station(lon=longitude, lat=latitude, timezone=timezone)
+```
 
 Data is simply added by assignment (e.g., the data frame `data_obs_daily`):
 
-    s.data_daily = data_obs_daily
+```python
+s.data_daily = data_obs_daily
+```
 
 A station statistics object can be generated in a similar manner. As station statistics are derived through analysing hourly observations for calibration, a reference to the data frame including hourly observations is given:
 
-    s.statistics = melodist.StationStatistics(data_obs_hourly)
+```python
+s.statistics = melodist.StationStatistics(data_obs_hourly)
+```
 
 Statistics can be derived for each variable by calling the respective function of the statistics object `s.statistics`: `calc_wind_stats()`, `calc_humidity_stats()`, `calc_temperature_stats()`, `calc_precipitation_stats()`, and `calc_radiation_stats`.
 
@@ -47,7 +53,7 @@ Please note that the dataframe's index must contain datetime values.
 
 The `Station` class provides functions to perform the disaggregation procedures for each variable: `disaggregate_temperature()`, `disaggregate_humidity()`, `disaggregate_wind()`, `disaggregate_radiation()`, and `disaggregate_precipitation()`. Moreover, an interpolation approach is also available using the `interpolate()` function.
 
-Hint: It is worth noting that each of the implemented disaggregation methods is directly accessible, e.g., `melodist.precipitation.disagg_prec()`. In this case all relevant parameters (e.g., those derived through calibrations) need to provided in the function call. This method specific call of functions is not necessary if a station and the corresponding station statistic object is defined. Thus, it is recommended to define objects and to perform the disaggregation procedures using the object’s methods. Also, the names and signatures of these functions are likely subject to change in future versions of MELODIST.
+Hint: It is worth noting that each of the implemented disaggregation methods is directly accessible, e.g., `melodist.precipitation.disagg_prec()`. In this case all relevant parameters (e.g., those derived through calibrations) need to be provided in the function call. This method-specific call of functions is not necessary if a station and the corresponding station statistics object is defined. Thus, it is recommended to define objects and to perform the disaggregation procedures using the object’s methods. Also, the names and signatures of these functions are likely subject to changes in future versions of MELODIST.
 
 At least the `method` argument is required for each of the disaggregation functions in a `Station`object. Please find below a list of available disaggregation methods for each variable:
 
@@ -60,7 +66,7 @@ At least the `method` argument is required for each of the disaggregation functi
 ### Humidity:
 * `method='minimal'` (H1): The dew point temperature is set to the minimum temperature on that day.
 * `method='dewpoint_regression'` (H2): Based on hourly observations, a regression approach is applied to calculate daily dew point temperature. Regression parameters must be specified (which is automatically done if `calc_humidity_stats()` is called prior to disaggregation).
-* `method='linear_dewpoint_variation'` (H3): This method extends H2 through linearly varying dew point temperature between consecutive days. The parameter `kr` needs to be specified (kr=6 if monthly radiation exceeds 100 W/m^2 else kr=12).
+* `method='linear_dewpoint_variation'` (H3): This method extends H2 through linearly varying dew point temperature between consecutive days. The parameter `kr` needs to be specified (`kr=6` if monthly radiation exceeds 100 W/m^2 else `kr=12`).
 * `method='min_max'` (H4): this method requires minimum and maximum relative humidity for each day.
 
 ### Wind speed:
@@ -83,7 +89,7 @@ Among other features the `melodist.util` module includes some functions that mig
 
 * `detect_gaps(dataframe, timestep, print_all=False, print_max=5, verbose=True)` can be used to find gaps in the data frame. A gap will be detected if any increment of time is not equal to the specified time step (in seconds).
 
-* Some methods require time series with full days (24 h) only. `drop_incomplete_days(dataframe)` drops heading and trailing days if they are not complete (0-23h).
+* Some methods require time series with full days (24 h) only. `drop_incomplete_days(dataframe)` drops heading and tailing days if they are not complete (0-23h).
 
 * For testing purposes an aggregation function is provided which aggregates hourly time series (data frames) to daily time series taking into account the characteristics of each meteorological variable (e.g., mean value for precipitation, daily total for precipitation, ...): `daily_from_hourly()`
 
@@ -93,10 +99,11 @@ MELODIST includes a feature to read and save parameter settings for all disaggre
 
 To save MELODIST parameters included in station statistics object you can simply call the `to_json(filename)` method of this object. At any time it is possible to recall this settings by creating a new station statistics object based on the settings stored in that file:
 
-    new_stationstatistics_object = melodist.StationStatistics.from_json(filename)
+```python
+new_stationstatistics_object = melodist.StationStatistics.from_json(filename)
+```
 
-Since MELODIST is based on pandas, numerous ways to import and export pandas data frames are possible. The `to_csv()` function of pandas is ideal to save and load time series without any restriction with respect to MELODIST applications. 
+Since MELODIST is based on pandas, numerous ways to import and export pandas data frames exist. The `to_csv()` and `read_csv()` functions of pandas are ideal to load and save time series without any restriction with respect to MELODIST applications. 
 
 ## Literature
-Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.0), Geosci. Model Dev. Discuss., doi:10.5194/gmd-2016-51, in review, 2016. 
-
+Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.1), *Geosci. Model Dev.*, 9, 2315-2333, [doi:10.5194/gmd-9-2315-2016](https://doi.org/10.5194/gmd-9-2315-2016), 2016. 
