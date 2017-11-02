@@ -49,7 +49,7 @@ class StationStatistics(object):
         self.wind = Bunch(a=None, b=None, t_shift=None)
         self.precip = Bunch(months=None, stats=None)
         self.hum = Bunch(a0=None, a1=None, kr=None, month_hour_precip_mean=None)
-        self.temp = Bunch(max_delta=None)
+        self.temp = Bunch(max_delta=None, mean_course=None)
 
         angstroem_df = pd.DataFrame(index=np.arange(12) + 1, columns=['a', 'b'])
         angstroem_df.a = 0.25
