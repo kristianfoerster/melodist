@@ -189,6 +189,9 @@ class StationStatistics(object):
         """
         def json_encoder(obj):
             if isinstance(obj, pd.DataFrame) or isinstance(obj, pd.Series):
+                if isinstance(obj.index, pd.core.index.MultiIndex):
+                    obj = obj.reset_index()  # convert MultiIndex to columns
+
                 return json.loads(obj.to_json(date_format='iso'))
             elif isinstance(obj, melodist.cascade.CascadeStatistics):
                 return obj.__dict__
@@ -202,6 +205,7 @@ class StationStatistics(object):
             wind=self.wind,
             precip=self.precip,
             hum=self.hum,
+            glob=self.glob
         )
 
         j = json.dumps(d, default=json_encoder, indent=4)
@@ -236,8 +240,27 @@ class StationStatistics(object):
         stats.hum.update(d['hum'])
         stats.precip.update(d['precip'])
         stats.wind.update(d['wind'])
+        stats.glob.update(d['glob'])
 
         if stats.temp.max_delta is not None:
-            stats.temp.max_delta = pd.read_json(json.dumps(stats.temp.max_delta), typ='series')
+            stats.temp.max_delta = pd.read_json(json.dumps(stats.temp.max_delta), typ='series').sort_index()
+
+        if stats.temp.mean_course is not None:
+            mc = pd.read_json(json.dumps(stats.temp.mean_course), typ='frame').sort_index()[np.arange(1, 12 + 1)]
+            stats.temp.mean_course = mc.sort_index()[np.arange(1, 12 + 1)]
+
+        if stats.hum.month_hour_precip_mean is not None:
+            mhpm = pd.read_json(json.dumps(stats.hum.month_hour_precip_mean), typ='frame').sort_index()
+            mhpm = mhpm.set_index(['level_0', 'level_1', 'level_2'])  # convert to MultiIndex
+            mhpm = mhpm.squeeze()  # convert to Series
+            mhpm = mhpm.rename_axis([None, None, None])  # remove index labels
+            stats.hum.month_hour_precip_mean = mhpm
+
+        for var in ('angstroem', 'bristcamp', 'mean_course'):
+            if stats.glob[var] is not None:
+                stats.glob[var] = pd.read_json(json.dumps(stats.glob[var])).sort_index()
+
+        if stats.glob.mean_course is not None:
+            stats.glob.mean_course = stats.glob.mean_course[np.arange(1, 12 + 1)]
 
         return stats
