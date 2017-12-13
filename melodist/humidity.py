@@ -116,7 +116,9 @@ def calculate_dewpoint_regression(hourly_data_obs, return_stats=False):
 
 def calculate_month_hour_precip_mean(hourly_data_obs):
     daily_precip_yesno = (hourly_data_obs.precip.resample('D').sum() > 0)
+    daily_precip_yesno.index.name = None
     hum = hourly_data_obs.hum
+    hum.index.name = None
     wet = daily_precip_yesno.loc[hum.index.date].values
     mhp_mean = hum.groupby([hum.index.month, hum.index.hour, wet]).mean()
 
