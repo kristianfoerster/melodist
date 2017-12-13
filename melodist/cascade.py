@@ -93,6 +93,19 @@ class CascadeStatistics:
         self.pxx = self.pxx[:,:] * factor
         self.wxx = self.wxx[:,:,:] * factor
 
+    def __eq__(self, other):
+        return (
+            np.array_equal(self.p01, other.p01)
+            and np.array_equal(self.p10, other.p10)
+            and np.array_equal(self.pxx, other.pxx)
+            and np.array_equal(self.wxx, other.wxx)
+            and np.array_equal(self.threshold, other.threshold)
+            and self.percentile == other.percentile
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def from_dict(cls, d):
         casc = cls()
