@@ -30,6 +30,7 @@ import json
 import numpy as np
 import pandas as pd
 
+
 class StationStatistics(object):
     """
     Class representing objects that include statistical information about
@@ -132,7 +133,9 @@ class StationStatistics(object):
         self.glob.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.glob)
 
         if data_daily is not None:
-            pot_rad = melodist.potential_radiation(melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone)
+            pot_rad = melodist.potential_radiation(
+                melodist.util.hourly_index(data_daily.index),
+                self._lon, self._lat, self._timezone)
             pot_rad_daily = pot_rad.resample('D').mean()
             obs_rad_daily = self.data.glob.resample('D').mean()
 
@@ -143,8 +146,11 @@ class StationStatistics(object):
             elif how == 'monthly':
                 month_ranges = zip(np.arange(12) + 1)
 
-            myisin = lambda s, v: pd.Series(s).isin(v).values
-            extract_months = lambda s, months: s[myisin(s.index.month, months)]
+            def myisin(s, v):
+                return pd.Series(s).isin(v).values
+
+            def extract_months(s, months):
+                return s[myisin(s.index.month, months)]
 
             if 'ssd' in data_daily and day_length is not None:
                 for months in month_ranges:
@@ -226,7 +232,7 @@ class StationStatistics(object):
         filename:    input file that holds statistics data
         """
         def json_decoder(d):
-            if 'p01' in d and 'pxx' in d: # we assume this is a CascadeStatistics object
+            if 'p01' in d and 'pxx' in d:  # we assume this is a CascadeStatistics object
                 return melodist.cascade.CascadeStatistics.from_dict(d)
 
             return d

@@ -35,7 +35,7 @@ from .util.util import distribute_equally
 from .station import Station
 from .stationstatistics import StationStatistics
 
-columns_daily=[
+columns_daily = [
     'tmean',
     'tmin',
     'tmax',
@@ -46,7 +46,7 @@ columns_daily=[
     'wind',
 ]
 
-columns_hourly=[
+columns_hourly = [
     'temp',
     'precip',
     'glob',
@@ -54,7 +54,8 @@ columns_hourly=[
     'wind',
 ]
 
-class Options: # (deprecated)
+
+class Options:  # (deprecated)
     TEMP_SINE_CURVE = 'sine'
     TEMP_LINEAR = 'linear'
     EQUAL_DISTRIBUTION = 'equal'

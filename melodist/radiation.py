@@ -78,13 +78,14 @@ def disaggregate_radiation(data_daily,
     elif method == 'pot_rad_via_ssd':
         # in this case use the Angstrom model
         globalrad = pd.Series(index=data_daily.index, data=0.)
-        dates = sun_times.index[sun_times.daylength > 0] # account for polar nights
-        globalrad[dates] = angstroem(data_daily.ssd[dates], sun_times.daylength[dates], pot_rad_daily[dates], angstr_a, angstr_b)
+        dates = sun_times.index[sun_times.daylength > 0]  # account for polar nights
+        globalrad[dates] = angstroem(data_daily.ssd[dates], sun_times.daylength[dates],
+                                     pot_rad_daily[dates], angstr_a, angstr_b)
     elif method == 'pot_rad_via_bc':
         # using data from Bristow-Campbell model
         globalrad = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c)
 
-    globalrad_equal = globalrad.reindex(pot_rad.index, method='ffill') # hourly values (replicate daily mean value for each hour)
+    globalrad_equal = globalrad.reindex(pot_rad.index, method='ffill')  # hourly values (replicate daily mean value for each hour)
     pot_rad_daily_equal = pot_rad_daily.reindex(pot_rad.index, method='ffill')
     glob_disagg = pot_rad / pot_rad_daily_equal * globalrad_equal
     glob_disagg[glob_disagg < 1e-2] = 0.
@@ -219,6 +220,7 @@ def bristow_campbell(tmin, tmax, pot_rad_daily, A, C):
 
     return R0
 
+
 def fit_bristow_campbell_params(tmin, tmax, pot_rad_daily, obs_rad_daily):
     """
     Fit the A and C parameters for the Bristow & Campbell (1984) model using observed daily
@@ -239,11 +241,14 @@ def fit_bristow_campbell_params(tmin, tmax, pot_rad_daily, obs_rad_daily):
     obs_rad_daily : Series
         Mean observed daily solar radiation.
     """
+    def bc_absbias(ac):
+        return np.abs(np.mean(bristow_campbell(df.tmin, df.tmax, df.pot, ac[0], ac[1]) - df.obs))
+
     df = pd.DataFrame(data=dict(tmin=tmin, tmax=tmax, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
-    bc_absbias = lambda ac: np.abs(np.mean(bristow_campbell(df.tmin, df.tmax, df.pot, ac[0], ac[1]) - df.obs))
-    res = scipy.optimize.minimize(bc_absbias, [0.75, 2.4]) # i.e. we minimize the absolute bias
+    res = scipy.optimize.minimize(bc_absbias, [0.75, 2.4])  # i.e. we minimize the absolute bias
 
     return res.x
+
 
 def angstroem(ssd, day_length, pot_rad_daily, a, b):
     """
@@ -275,6 +280,7 @@ def angstroem(ssd, day_length, pot_rad_daily, a, b):
 
     return glob_day
 
+
 def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
     """
     Fit the a and b parameters for the Angstroem (1924) model using observed daily
@@ -297,7 +303,8 @@ def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
     """
     df = pd.DataFrame(data=dict(ssd=ssd, day_length=day_length, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
 
-    angstroem_opt = lambda x, a, b: angstroem(x[0], x[1], x[2], a, b)
+    def angstroem_opt(x, a, b):
+        return angstroem(x[0], x[1], x[2], a, b)
 
     x = np.array([df.ssd, df.day_length, df.pot])
     popt, pcov = scipy.optimize.curve_fit(angstroem_opt, x, df.obs, p0=[0.25, 0.75])

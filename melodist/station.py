@@ -28,13 +28,14 @@ import melodist
 import melodist.util
 import pandas as pd
 
+
 class Station(object):
     """
     Class representing meteorological stations including all relevant 
     information such as metadata and meteorological time series (observed
     and disaggregated)
     """
-    _columns_daily=[
+    _columns_daily = [
         'tmean',
         'tmin',
         'tmax',
@@ -45,7 +46,7 @@ class Station(object):
         'wind',
     ]
 
-    _columns_hourly=[
+    _columns_hourly = [
         'temp',
         'precip',
         'glob',
@@ -89,11 +90,12 @@ class Station(object):
         assert df.index.resolution == 'day'
         assert df.index.is_monotonic_increasing
 
-        if df.index.freq is None: # likely some days are missing
+        if df.index.freq is None:  # likely some days are missing
             df = df.reindex(pd.DatetimeIndex(start=df.index[0], end=df.index[-1], freq='D'))
 
         for var in 'tmin', 'tmax', 'tmean':
-            if var in df: assert not any(df[var] < 200), 'Implausible temperature values detected - temperatures must be in K'
+            if var in df:
+                assert not any(df[var] < 200), 'Implausible temperature values detected - temperatures must be in K'
 
         self._data_daily = df.copy()
 
@@ -171,11 +173,10 @@ class Station(object):
 
     def calc_sun_times(self):
         """
-        Computes the times of sunrise, solar noon, and sunset for each day. 
+        Computes the times of sunrise, solar noon, and sunset for each day.
         """
 
         self.sun_times = melodist.util.get_sun_times(self.data_daily.index, self.lon, self.lat, self.timezone)
-
 
     def disaggregate_wind(self, method='equal'):
         """
@@ -328,7 +329,8 @@ class Station(object):
             for months, stats in zip(self.statistics.precip.months, self.statistics.precip.stats):
                 precip_daily = melodist.seasonal_subset(self.data_daily.precip, months=months)
                 if len(precip_daily) > 1:
-                    data = melodist.disagg_prec(precip_daily, method=method, cascade_options=stats, shift=shift, zerodiv=zerodiv)
+                    data = melodist.disagg_prec(precip_daily, method=method, cascade_options=stats,
+                                                shift=shift, zerodiv=zerodiv)
                     precip_disagg.loc[data.index] = data
         elif method == 'masterstation':
             precip_disagg = melodist.precip_master_station(self.data_daily.precip, master_precip, zerodiv)

@@ -29,6 +29,7 @@ import melodist.util
 import numpy as np
 import pandas as pd
 
+
 def disaggregate_temperature(data_daily,
                              method='sine_min_max',
                              min_max_time='fix',
@@ -91,15 +92,15 @@ def disaggregate_temperature(data_daily,
             locdf.max_loc = 14
         elif min_max_time == 'sun_loc':
             # take location for minimum and maximum by sunrise / sunnoon + 2h
-            locdf.min_loc = sun_times.sunrise.round() # sun rise round to full hour
-            locdf.max_loc = sun_times.sunnoon.round() + default_shift_hours # sun noon round to full hour + fix 2h
+            locdf.min_loc = sun_times.sunrise.round()  # sun rise round to full hour
+            locdf.max_loc = sun_times.sunnoon.round() + default_shift_hours  # sun noon round to full hour + fix 2h
         elif min_max_time == 'sun_loc_shift':
             # take location for minimum and maximum by sunrise / sunnoon + monthly delta
-            locdf.min_loc = sun_times.sunrise.round() # sun rise round to full hour
-            locdf.max_loc = (sun_times.sunnoon + max_delta[locdf.index.month].values).round() # sun noon + shift derived from observed hourly data, round to full hour
+            locdf.min_loc = sun_times.sunrise.round()  # sun rise round to full hour
+            locdf.max_loc = (sun_times.sunnoon + max_delta[locdf.index.month].values).round()  # sun noon + shift derived from observed hourly data, round to full hour
 
             pos = locdf.min_loc > locdf.max_loc
-            locdf.loc[pos, 'max_loc'] = sun_times.sunnoon[pos].round() + default_shift_hours # standard shift in this case
+            locdf.loc[pos, 'max_loc'] = sun_times.sunnoon[pos].round() + default_shift_hours  # standard shift in this case
 
         locdf.min_loc = locdf.min_loc.astype(int)
         locdf.max_loc = locdf.max_loc.astype(int)
@@ -204,7 +205,7 @@ def disaggregate_temperature(data_daily,
         data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
         dtr = data_daily_as_hourly.tmax - data_daily_as_hourly.tmin
         mc = pd.Series(index=temp_disagg.index)
-        mean_course_zeromean = mean_course - mean_course.mean() # shift mean course so that the daily mean is 0
+        mean_course_zeromean = mean_course - mean_course.mean()  # shift mean course so that the daily mean is 0
         mc[:] = mean_course_zeromean.unstack().loc[list(zip(temp_disagg.index.month, temp_disagg.index.hour))].values
         temp_disagg[:] = data_daily_as_hourly.temp + dtr * mc
 

@@ -85,7 +85,7 @@ def fit_cosine_function(wind):
         parameters needed to generate diurnal features of windspeed using a cosine function
     """
     wind_daily = wind.groupby(wind.index.date).mean()
-    wind_daily_hourly = pd.Series(index=wind.index, data=wind_daily.loc[wind.index.date].values) # daily values evenly distributed over the hours
+    wind_daily_hourly = pd.Series(index=wind.index, data=wind_daily.loc[wind.index.date].values)  # daily values evenly distributed over the hours
 
     df = pd.DataFrame(data=dict(daily=wind_daily_hourly, hourly=wind)).dropna(how='any')
     x = np.array([df.daily, df.index.hour])

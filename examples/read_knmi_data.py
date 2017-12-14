@@ -27,6 +27,7 @@ import pandas as pd
 from datetime import timedelta
 import glob
 
+
 def get_variables():
     """returns the data fields relevant for MELODIST
 
@@ -42,6 +43,7 @@ def get_variables():
         'ssd',
     ]
 
+
 def read_single_knmi_file(filename):
     """reads a single file of KNMI's meteorological time series
 
@@ -56,21 +58,21 @@ def read_single_knmi_file(filename):
     hourly_data_obs_raw = pd.read_csv(
         filename,
         parse_dates=[['YYYYMMDD', 'HH']],
-        date_parser=lambda yyyymmdd,hh: pd.datetime(int(str(yyyymmdd)[0:4]),
-                                                       int(str(yyyymmdd)[4:6]),
-                                                           int(str(yyyymmdd)[6:8]), 
-                                                               int(hh)-1),
+        date_parser=lambda yyyymmdd, hh: pd.datetime(int(str(yyyymmdd)[0:4]),
+                                                     int(str(yyyymmdd)[4:6]),
+                                                     int(str(yyyymmdd)[6:8]),
+                                                     int(hh) - 1),
         skiprows=31,
         skipinitialspace=True,
-        na_values = '',
-        keep_date_col = True,
+        na_values='',
+        keep_date_col=True,
     )
-    
+
     hourly_data_obs_raw.index = hourly_data_obs_raw['YYYYMMDD_HH']
-    hourly_data_obs_raw.index = hourly_data_obs_raw.index + timedelta(hours = 1)
-    
-    columns_hourly=get_variables()
-    
+    hourly_data_obs_raw.index = hourly_data_obs_raw.index + timedelta(hours=1)
+
+    columns_hourly = get_variables()
+
     hourly_data_obs = pd.DataFrame(
         index=hourly_data_obs_raw.index,
         columns=columns_hourly,
@@ -88,6 +90,7 @@ def read_single_knmi_file(filename):
     hourly_data_obs.loc[negative_values, 'precip'] = 0.0
     return hourly_data_obs
 
+
 def read_knmi_dataset(directory):
     """Reads files from a directory and merges the time series
 
@@ -102,19 +105,17 @@ def read_knmi_dataset(directory):
     """
     filemask = '%s*.txt' % directory
     filelist = glob.glob(filemask)
-    
-    columns_hourly=get_variables()
+
+    columns_hourly = get_variables()
     ts = pd.DataFrame(columns=columns_hourly)
-    
-    firstCall=True
+
+    first_call = True
     for file_i in filelist:
         print(file_i)
         current = read_single_knmi_file(file_i)
-        if(firstCall):
+        if(first_call):
             ts = current
-            firstCall = False
+            first_call = False
         else:
-            ts = pd.concat([ts, current])        
+            ts = pd.concat([ts, current])
     return ts
-
-

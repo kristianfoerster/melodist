@@ -25,8 +25,6 @@
 
 from __future__ import print_function, division, absolute_import
 import melodist
-import pandas as pd
-import numpy as np
 import read_knmi_data
 
 # This an example that demonstrates the usage of MELODIST.
@@ -43,13 +41,12 @@ import read_knmi_data
 # time series using the KNMI reader file, which is also part of the repository.
 #
 # read files for De Bilt (ID=260), please adjust path of input file (path_inp)
-
-path_inp = '/tmp/uurgeg_260_2001-2010.txt' # change!!!
+path_inp = '/tmp/uurgeg_260_2001-2010.txt'
 
 data_obs_hourly = read_knmi_data.read_single_knmi_file(path_inp)
 
 # recommendation: shift datetime to local time zone
-data_obs_hourly = data_obs_hourly.shift(1) # UTC -> CET
+data_obs_hourly = data_obs_hourly.shift(1)  # UTC -> CET
 
 # truncate dataframe in order to obtain full days if applicable
 data_obs_hourly = melodist.util.drop_incomplete_days(data_obs_hourly)
@@ -61,12 +58,10 @@ data_obs_hourly = data_obs_hourly.loc['2009-01-01':'2009-12-31']
 # disaggregation
 data_obs_daily = melodist.util.daily_from_hourly(data_obs_hourly)
 
-#%%
-
 # Create station object
 longitude = 5.18
-latitude  = 52.10
-timezone  = 1
+latitude = 52.10
+timezone = 1
 debilt = melodist.Station(lon=longitude, lat=latitude, timezone=timezone)
 debilt.data_daily = data_obs_daily
 
@@ -83,31 +78,31 @@ stats.calc_temperature_stats()
 stats.calc_precipitation_stats()
 
 # as an alternative you can also define 2 seasons for precipitation statistics
-#months_season1 = np.array([11,12,1,2,3,4]) # winter season
-#months_season2 = np.array([5,6,7,8,9,10]) # summer season
-#seasons = [months_season1, months_season2] # combine subsets to one array
-#stats.calc_precipitation_stats(months=seasons) 
+# months_season1 = np.array([11,12,1,2,3,4]) # winter season
+# months_season2 = np.array([5,6,7,8,9,10]) # summer season
+# seasons = [months_season1, months_season2] # combine subsets to one array
+# stats.calc_precipitation_stats(months=seasons)
 
 # Step 3: disaggregate temperature
 debilt.disaggregate_temperature(method='sine', min_max_time='fix')
-#temp_sim_T1a = debilt.data_disagg.temp.copy()
-#s.disaggregate_temperature(method='sine', min_max_time='sun_loc')
-#temp_sim_T1b = debilt.data_disagg.temp.copy()
-#s.disaggregate_temperature(method='sine', min_max_time='sun_loc_shift')
-#temp_sim_T1c = debilt.data_disagg.temp.copy()
-#s.disaggregate_temperature(method='sine', min_max_time='sun_loc', mod_nighttime=True)
-#temp_sim_T1d = debilt.data_disagg.temp.copy()
-#s.disaggregate_temperature(method='sine', min_max_time='sun_loc')
+# temp_sim_T1a = debilt.data_disagg.temp.copy()
+# s.disaggregate_temperature(method='sine', min_max_time='sun_loc')
+# temp_sim_T1b = debilt.data_disagg.temp.copy()
+# s.disaggregate_temperature(method='sine', min_max_time='sun_loc_shift')
+# temp_sim_T1c = debilt.data_disagg.temp.copy()
+# s.disaggregate_temperature(method='sine', min_max_time='sun_loc', mod_nighttime=True)
+# temp_sim_T1d = debilt.data_disagg.temp.copy()
+# s.disaggregate_temperature(method='sine', min_max_time='sun_loc')
 
 # Step 4: diasaggregate humidity
 debilt.disaggregate_humidity(method='linear_dewpoint_variation')
-#hum_sim_H3 = debilt.data_disagg.hum.copy()
-#debilt.disaggregate_humidity(method='dewpoint_regression')
-#hum_sim_H2 = debilt.data_disagg.hum.copy()
-#debilt.disaggregate_humidity(method='minimal')
-#hum_sim_H1 = debilt.data_disagg.hum.copy()
-#debilt.disaggregate_humidity(method='min_max')
-#hum_sim_H4 = debilt.data_disagg.hum.copy()
+# hum_sim_H3 = debilt.data_disagg.hum.copy()
+# debilt.disaggregate_humidity(method='dewpoint_regression')
+# hum_sim_H2 = debilt.data_disagg.hum.copy()
+# debilt.disaggregate_humidity(method='minimal')
+# hum_sim_H1 = debilt.data_disagg.hum.copy()
+# debilt.disaggregate_humidity(method='min_max')
+# hum_sim_H4 = debilt.data_disagg.hum.copy()
 
 # Step 5: disaggregate wind speed
 debilt.disaggregate_wind(method='cosine')
@@ -115,8 +110,8 @@ debilt.disaggregate_wind(method='cosine')
 # Step 6: disaggregate radiation
 # Suppose we want to apply the Angstrom model to compute shortwave radiation.
 # In this case, we apply the Angstrom parameters that have been found De Bilt:
-debilt.statistics.glob.angstroem_a = 0.36 # valid for De Bilt
-debilt.statistics.glob.angstroem_b = 0.68 # valid for De Bilt
+debilt.statistics.glob.angstroem_a = 0.36  # valid for De Bilt
+debilt.statistics.glob.angstroem_b = 0.68  # valid for De Bilt
 debilt.disaggregate_radiation(method='pot_rad_via_ssd')
 
 # Step 7: disaggregate precipitation
@@ -125,7 +120,7 @@ debilt.disaggregate_precipitation(method='cascade')
 # Step 8: Testing the methods for longer time series
 # We have calculated the statistics from just one year of hourly data. Now we can read in
 # the daily data and disaggregate it using the statistics stored in the Station object.
-data_obs_daily = melodist.util.daily_from_hourly(read_knmi_data.read_single_knmi_file(path_inp)) 
+data_obs_daily = melodist.util.daily_from_hourly(read_knmi_data.read_single_knmi_file(path_inp))
 # in this example we read the hourly data (all 10 years now) and manually resample it
 # to daily values. Usually obviously we would read in actual daily values.
 debilt.data_daily = data_obs_daily
@@ -134,7 +129,7 @@ debilt.data_daily = data_obs_daily
 # Warning: the dataframes will be extended accoring the new length of input data!
 debilt.disaggregate_precipitation(method='cascade')
 
-# Alternatively, we could also export the calculated statistics to a JSON file, 
+# Alternatively, we could also export the calculated statistics to a JSON file,
 # create a new station, and import the statistics file:
 debilt.statistics.to_json('/tmp/debilt_stats.json')
 debilt2 = melodist.Station(lon=longitude, lat=latitude, timezone=timezone)
