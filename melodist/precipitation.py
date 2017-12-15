@@ -512,8 +512,9 @@ def aggregate_precipitation(vec_data):
     cascade_opt.p10 = cascade_opt.p10 / nb
     cascade_opt.pxx = cascade_opt.pxx / nb
 
-    for k in range(0, 7):
-        cascade_opt.wxx[k, :, :] = cascade_opt.wxx[k, :, :] / nbxx[:, :]
+    with np.errstate(divide='ignore', invalid='ignore'):  # do not issue warnings here when dividing by zero, this is handled below
+        for k in range(0, 7):
+            cascade_opt.wxx[k, :, :] = cascade_opt.wxx[k, :, :] / nbxx[:, :]
 
     # In some cases, the time series are too short for deriving statistics.
 
