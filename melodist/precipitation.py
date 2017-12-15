@@ -181,7 +181,6 @@ def disagg_prec_cascade(precip_daily,
 
         # evaluate time step
         dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 3600  # hours
-        print("disaggregating " + str(dt/2**(l-1)) + " hours to " + str(dt/2**l) + " hours...")
 
         # evaluate mean rainfall intensity for wet boxes
         # these values should be determined during the aggregation phase!!!!!
@@ -274,7 +273,6 @@ def disagg_prec_cascade(precip_daily,
                 j = j + 1
 
     # uniformly disaggregate 0.75 h values to 0.25 h values
-    print('disaggregating 0.75 hours to 0.25 hours... (uniform)')
     vdn_025 = np.zeros(len(vdn_out)*3)
     j = 0
     for i in range(0, len(vdn_out)):
@@ -283,7 +281,6 @@ def disagg_prec_cascade(precip_daily,
         j = j + 3
 
     # aggregate to hourly time steps
-    print('aggregating 0.25 hours to 1.0 hours...')
     vdn_025cs = np.cumsum(vdn_025)
     vdn = np.zeros(int(len(vdn_025)/4))
     for i in range(0, len(vdn)+1):
@@ -305,9 +302,6 @@ def disagg_prec_cascade(precip_daily,
     # shifts the data by shift steps (fills with nan/cuts edge data )
     if shift != 0:
         precip_hourly = precip_hourly.shift(shift)
-
-    # replace column
-    print("done")
 
     # return time series
     if test:
@@ -379,8 +373,6 @@ def aggregate_precipitation(vec_data):
     dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 3600  # hours
 
     dt_out = dt * 2
-
-    print('aggregating ' + str(dt) + ' hours to ' + str(dt_out) + ' hours...')
 
     # length of input time series
     n_in = len(vec_data)
