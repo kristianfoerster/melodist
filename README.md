@@ -4,7 +4,7 @@
 
 MELODIST is an open-source toolbox written in Python for disaggregating daily meteorological time series to hourly time steps. It is licensed under GPLv3 (see license file). The software framework consists of disaggregation functions for each variable including temperature, humidity, precipitation, shortwave radiation, and wind speed. These functions can simply be called from a station object, which includes all relevant information about site characteristics. The data management of time series is handled using data frame objects as defined in the pandas package. In this way, input and output data can be easily prepared and processed. For instance, the pandas package is data i/o capable and includes functions to plot time series using the matplotlib library.
 
-An example file (example.py) is provided along the package itself. This example demonstrates the usage of MELODIST for all variables. First, a station object is created providing some basic details on the site’s characteristics (e.g., latitude and longitude are relevant for radiation disaggregation). Once the station object is defined and filled with data, each disaggregation step is done through calling the designated function specified for each variable. Each of these functions requires a `method` argument and if needed additional parameters to work properly. Some of these methods (see below) require additional statistical evaluations of hourly time series prior to the disaggregation procedure. This information is stored in a station statistics object that is associated to the station object (see example file for further details).
+An [example file](examples/examples.ipynb) is provided along the package itself as a Jupyter notebook. This example demonstrates the usage of MELODIST for all variables. First, a station object is created providing some basic details on the site’s characteristics (e.g., latitude and longitude are relevant for radiation disaggregation). Once the station object is defined and filled with data, each disaggregation step is done through calling the designated function specified for each variable. Each of these functions requires a `method` argument and if needed additional parameters to work properly. Some of these methods (see below) require additional statistical evaluations of hourly time series prior to the disaggregation procedure. This information is stored in a station statistics object that is associated to the station object (see example file for further details).
 
 ## Station object
 In the framework of MELODIST a station object includes all relevant information including metadata and time series. A station is generated using the constructor method:
@@ -36,16 +36,17 @@ MELODIST expects exact naming conventions for the time series provided in pandas
 * `glob`: Global (shortwave) radiation [W/m<sup>2</sup>]
 * `hum`: Relative humidity [%]
 * `wind`: Wind speed [m/s]
-* `ssd`: sunshine duration [min]
+* `ssd`: Sunshine duration [min]
 
 For daily data, additional columns need to be specified (if applicable):
 
 * `temp`: Average temperature [K]
 * `tmin`: Minimum temperature [K]
 * `tmax`: Maximum temperature [K]
+* `hum`: Average humidity [%]
 * `hum_min`: Minimum humidity [%]
 * `hum_max`: Maximum humidity [%]
-* `ssd`: sunshine duration [h]
+* `ssd`: Sunshine duration [h]
 
 Please note that the dataframe's index must contain datetime values.
 
