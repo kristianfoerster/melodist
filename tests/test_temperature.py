@@ -13,7 +13,7 @@ class TestTemperature(MelodistTestCase):
         assert np.all(np.isfinite(td))
         assert np.all(tdd >= station.data_daily.tmin)
         assert np.all(tdd <= station.data_daily.tmax)
-        assert np.allclose(station.data_daily.temp, tdd, atol=2)
+        assert np.allclose(station.data_daily.temp, tdd, atol=3)
 
     def test_mean_course_min_max(self):
         station = self.station
