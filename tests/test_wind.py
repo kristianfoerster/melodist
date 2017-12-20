@@ -15,4 +15,4 @@ class TestWind(MelodistTestCase):
             assert not np.any(wd < 0)
 
             if method == 'equal':
-                assert np.allclose(station.data_daily.wind, wd.resample('D').mean(), atol=1e-3)
+                assert np.allclose(station.data_daily.wind, wd.resample('D').mean(), atol=1e-3, equal_nan=True)

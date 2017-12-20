@@ -1,11 +1,11 @@
 import copy
-import funcs
 import numpy as np
-import unittest
+from util import MelodistTestCase, setup_station
 
-class TestStation(unittest.TestCase):
+
+class TestStation(MelodistTestCase):
     def setUp(self):
-        self._station = funcs.setup_station()
+        self._station = setup_station()
 
     @property
     def station(self):
