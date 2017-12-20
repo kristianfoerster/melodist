@@ -14,7 +14,7 @@ class MelodistTestCase(unittest.TestCase):
 
 
 def setup_station():
-    df_hourly = pd.read_csv('tests/data/testdata.csv.gz', index_col=0, parse_dates=True)
+    df_hourly = pd.read_csv('examples/testdata.csv.gz', index_col=0, parse_dates=True)
     df_hourly = df_hourly.loc['2016-01-01':'2016-12-31']
     df_hourly.temp += 273.15
 
