@@ -1,3 +1,5 @@
+[![Build Status](https://www.travis-ci.org/kristianfoerster/melodist.svg?branch=master)](https://www.travis-ci.org/kristianfoerster/melodist)
+
 # MELODIST - An open-source MEteoroLOgical observation time series DISaggregation Tool
 
 *Welcome to MELODIST - MEteoroLOgical observation time series DISaggregation Tool*
