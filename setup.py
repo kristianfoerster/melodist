@@ -14,7 +14,7 @@ processed."""
 setup(
     name='melodist',
 
-    version='0.1.1',
+    version='0.1.2',
 
     description='MELODIST: MEteoroLOgical observation time series DISaggregation Tool',
     long_description=long_description,
@@ -22,7 +22,7 @@ setup(
     url='https://github.com/kristianfoerster/melodist',
 
     author='Kristian Förster, Florian Hanzer, Benjamin Winter, Thomas Marke',
-    author_email='kristian.foerster@uibk.ac.at',
+    author_email='foerster@iww.uni-hannover.de',
 
     license='GPLv3',
 

@@ -125,10 +125,11 @@ Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and
 
 ## Version history
 
-* 0.1.2:
+* 0.1.2 (21 Dec 2017):
   * new disaggregation methods: `'sine_mean'`, `'mean_course_min_max'` and `'mean_course_mean'` for temperature, `'month_hour_precip_mean'` for humidity and `'mean_course'` for radiation
   * add option to preserve daily mean values in humidity disaggregation
   * add option to calculate and apply Angstroem/Bristow-Campbell parameters monthly or seasonally instead of for all values
+  * bugfix in calculation of potential radiation
 * 0.1.1 (03 Jun 2016):
   * data type corrections in order to avoid conversion warnings
   * new functions for the estimation of Angstrom and Bristow-Campbell parameters
