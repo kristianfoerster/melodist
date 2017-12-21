@@ -116,6 +116,8 @@ new_stationstatistics_object = melodist.StationStatistics.from_json(filename)
 
 Since MELODIST is based on pandas, numerous ways to import and export pandas data frames exist. The `to_csv()` and `read_csv()` functions of pandas are ideal to load and save time series without any restriction with respect to MELODIST applications. 
 
+MELODIST has also some additional specific data input/output capabilities in `melodist.data_io`, including functions to read data provided by the national weather services of the Netherlands (`read_single_knmi_file()`, `read_knmi_dataset()`) and Germany (`read_dwd()`). Moreover, the [SMET format](https://models.slf.ch/docserver/meteoio/SMET_specifications.pdf) is supported for reading and writing (`read_smet()`, `write_smet()`). This format is used in the [MeteoIO](https://models.slf.ch/p/meteoio) library.
+
 ## Literature
 Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.1), *Geosci. Model Dev.*, 9, 2315-2333, [doi:10.5194/gmd-9-2315-2016](https://doi.org/10.5194/gmd-9-2315-2016), 2016.
 

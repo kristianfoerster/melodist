@@ -30,7 +30,7 @@ from .temperature import *
 from .radiation import *
 from .humidity import *
 from .wind import *
-from .data_reader import *
+from .data_io import *
 from .util.util import distribute_equally
 from .station import Station
 from .stationstatistics import StationStatistics
