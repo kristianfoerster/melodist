@@ -26,6 +26,10 @@
 #                                                                      #
 ########################################################################
 
+# Update 2018: Allow cascade-based disaggregation from daily data
+# to 5 minutes data (9, 10, or 11 levels of branching)
+# Author: Siling Chen
+
 from __future__ import print_function, division, absolute_import
 
 import numpy as np
@@ -83,8 +87,8 @@ def disagg_prec(dailyData,
     return precip_disagg
 
 
-def disagg_prec_cascade(precip_daily,
-                        cascade_options,
+def disagg_prec_cascade(precip_daily, 
+                        cascade_options, hourly=True,level=9,
                         shift=0,
                         test=False):
     """Precipitation disaggregation with cascade model (Olsson, 1998)
@@ -93,6 +97,9 @@ def disagg_prec_cascade(precip_daily,
     ----------
     precip_daily : pd.Series
         daily data
+    hourly: Boolean (for an hourly resolution disaggregation)
+        if False, then returns 5-min disaggregated precipitation 
+        (disaggregation level depending on the "level" variable)
     cascade_options : cascade object
         including statistical parameters for the cascade model
     shift : int
@@ -110,8 +117,10 @@ def disagg_prec_cascade(precip_daily,
     missing_days = precip_daily.index[precip_daily.isnull()]
     precip_daily[missing_days] = 0
 
-    si = 5  # index of first level
-
+    if hourly:
+        si = 5  # index of first level
+    else:
+        si = level
     # statistics for branching into two bins
     wxxcum = np.zeros((7, 2, 4))
 
@@ -124,11 +133,11 @@ def disagg_prec_cascade(precip_daily,
             if k > 0:
                 wxxcum[k, :, :] = wxxcum[k-1, :, :] + wxxcum[k, :, :]
     elif isinstance(cascade_options, list):
-        if len(cascade_options) == 5:
+        if len(cascade_options) == si:#5
             overwrite_stats = True
             list_casc = cascade_options
         else:
-            raise ValueError('Cascade statistics list must have 5 elements!')
+            raise ValueError('Cascade statistics list must have %s elements!' % si)
     else:
         raise TypeError('cascade_options has invalid type')
 
@@ -139,7 +148,16 @@ def disagg_prec_cascade(precip_daily,
     vdn3 = np.zeros(n*8)
     vdn4 = np.zeros(n*16)
     vdn5 = np.zeros(n*32)
-
+    if not hourly:
+        vdn6 = np.zeros(n*64)
+        vdn7 = np.zeros(n*128)
+        vdn8 = np.zeros(n*256)
+        vdn9 = np.zeros(n*512)
+    if level == 10 or level == 11:
+        vdn10 = np.zeros(n*1024)
+        if level == 11:
+            vdn11 = np.zeros(n*2048)
+            
     # class boundaries for histograms
     wclassbounds = np.array([0.0,
                              0.1429,
@@ -151,7 +169,7 @@ def disagg_prec_cascade(precip_daily,
                              1.0])
 
     # disaggregation for each level
-    for l in range(1, 6):
+    for l in range(1, si+1):
         if l == 1:
             vdn_in = precip_daily
             vdn_out = vdn1
@@ -167,7 +185,26 @@ def disagg_prec_cascade(precip_daily,
         elif l == 5:
             vdn_in = vdn_out
             vdn_out = vdn5
-
+       
+        elif l == 6:
+            vdn_in = vdn_out
+            vdn_out = vdn6
+        elif l == 7:
+            vdn_in = vdn_out
+            vdn_out = vdn7
+        elif l == 8:
+            vdn_in = vdn_out
+            vdn_out = vdn8
+        elif l == 9:
+            vdn_in = vdn_out
+            vdn_out = vdn9
+        elif l == 10:
+            vdn_in = vdn_out
+            vdn_out = vdn10
+        elif l == 11:
+            vdn_in = vdn_out
+            vdn_out = vdn11
+                
         si -= 1
         if overwrite_stats:
             cascade_options = list_casc[si]
@@ -180,8 +217,10 @@ def disagg_prec_cascade(precip_daily,
             meanvol = cascade_options.threshold[si]
 
         # evaluate time step
-        dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 3600  # hours
-
+        if hourly:
+                dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 3600  # hours
+        else:
+                dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 300  # 5min
         # evaluate mean rainfall intensity for wet boxes
         # these values should be determined during the aggregation phase!!!!!
         # mean volume threshold
@@ -271,44 +310,56 @@ def disagg_prec_cascade(precip_daily,
                 j = j + 1
                 vdn_out[j] = 0.0
                 j = j + 1
-
-    # uniformly disaggregate 0.75 h values to 0.25 h values
-    vdn_025 = np.zeros(len(vdn_out)*3)
-    j = 0
-    for i in range(0, len(vdn_out)):
-        for m in range(0, 3):
-            vdn_025[j+m] = vdn_out[i] / 3.
-        j = j + 3
-
-    # aggregate to hourly time steps
-    vdn_025cs = np.cumsum(vdn_025)
-    vdn = np.zeros(int(len(vdn_025)/4))
-    for i in range(0, len(vdn)+1):
-        # for first hour take 4th item
-        if i == 0:
-            vdn[i] = vdn_025cs[3]
-        elif i == 1:
-            pass
-        else:
-            # >1 (starting with 2-1 = 1 item)
-            vdn[i-1] = vdn_025cs[(i*4)-1] - vdn_025cs[(i*4)-5]
-
-    precip_hourly = pd.Series(index=melodist.util.hourly_index(precip_daily.index), data=vdn)
-
+    
+    if hourly:
+        # uniformly disaggregate 0.75 h values to 0.25 h values
+        vdn_025 = np.zeros(len(vdn_out)*3)
+        j = 0
+        for i in range(0, len(vdn_out)):
+            for m in range(0, 3):
+                vdn_025[j+m] = vdn_out[i] / 3.
+            j = j + 3
+    
+        # aggregate to hourly time steps
+        vdn_025cs = np.cumsum(vdn_025)
+        vdn = np.zeros(int(len(vdn_025)/4))
+        for i in range(0, len(vdn)+1):
+            # for first hour take 4th item
+            if i == 0:
+                vdn[i] = vdn_025cs[3]
+            elif i == 1:
+                pass
+            else:
+                # >1 (starting with 2-1 = 1 item)
+                vdn[i-1] = vdn_025cs[(i*4)-1] - vdn_025cs[(i*4)-5]
+    
+        disagg_precip = pd.Series(index=melodist.util.hourly_index(precip_daily.index), data=vdn)
+    
+    else:
+        precip_sn = pd.Series(index= sub_level_index(precip_daily.index, level=level, fill_gaps=False), data=vdn_out)
+        disagg_precip = precip_sn.resample('5min').sum()
+    
     # set missing days to nan again:
     for date in missing_days:
-        precip_hourly[precip_hourly.index.date == date.date()] = np.nan
+         disagg_precip[ disagg_precip.index.date == date.date()] = np.nan
 
     # shifts the data by shift steps (fills with nan/cuts edge data )
     if shift != 0:
-        precip_hourly = precip_hourly.shift(shift)
+         disagg_precip =  disagg_precip.shift(shift) #? freq='1U')
 
     # return time series
     if test:
-        return vdn1, vdn2, vdn3, vdn4, vdn5, vdn_025, precip_hourly
+        if hourly:
+            return vdn1, vdn2, vdn3, vdn4, vdn5, vdn_025, disagg_precip
+        else:
+            if level == 9:
+                return vdn1, vdn2, vdn3, vdn4, vdn5, vdn6, vdn7, vdn8, vdn9, precip_sn, disagg_precip
+            elif level == 10:
+                return vdn1, vdn2, vdn3, vdn4, vdn5, vdn6, vdn7, vdn8, vdn9, vdn10, precip_sn, disagg_precip
+            else:
+                return vdn1, vdn2, vdn3, vdn4, vdn5, vdn6, vdn7, vdn8, vdn9, vdn10, vdn11, precip_sn, disagg_precip
     else:
-        return precip_hourly
-
+        return  disagg_precip
 
 def precip_master_station(precip_daily,
                           master_precip_hourly,
@@ -354,13 +405,13 @@ def precip_master_station(precip_daily,
     return precip_hourly
 
 
-def aggregate_precipitation(vec_data):
+def aggregate_precipitation(vec_data,hourly=True):
     """Aggregates highly resolved precipitation data and creates statistics
 
     Parameters
     ----------
     vec_data : pd.Series
-        hourly values
+        hourly (hourly=True) OR 5-min values 
 
     Returns
     -------
@@ -370,8 +421,11 @@ def aggregate_precipitation(vec_data):
     cascade_opt = cascade.CascadeStatistics()
 
     # get time step
-    dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 3600  # hours
-
+    if hourly:
+        dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 3600  # hours
+    else:
+        dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 300  # 5min
+    
     dt_out = dt * 2
 
     # length of input time series
@@ -569,7 +623,7 @@ def seasonal_subset(dataframe,
     return df.sort_index()
 
 
-def build_casc(hourlyDataObs,
+def build_casc(ObsData, hourly=True,level=9,
                months=None,
                avg_stats=True,
                percentile=50):
@@ -577,8 +631,10 @@ def build_casc(hourlyDataObs,
 
     Parameters
     -----------
-    hourlyDataObs : pd.Series
-        hourly observed data
+    ObsData : pd.Series
+        hourly=True -> hourly obs data
+        else -> 5min data (disaggregation level=9 (default), 10, 11)
+    
     months : numpy array of ints
         Months for each seasons to be used for statistics (array of
         numpy array, default=1-12, e.g., [np.arange(12) + 1])
@@ -601,18 +657,26 @@ def build_casc(hourlyDataObs,
 
     # Parameter estimation for each season
     for cur_months in months:
-        vdn = seasonal_subset(hourlyDataObs, cur_months)
-        if len(hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)]) > 0:
-            hourlyDataObs.precip[np.isnan(hourlyDataObs.precip)] = 0
+        vdn = seasonal_subset(ObsData, cur_months)
+        if len(ObsData.precip[np.isnan(ObsData.precip)]) > 0:
+            ObsData.precip[np.isnan(ObsData.precip)] = 0
 
         casc_opt = melodist.cascade.CascadeStatistics()
         casc_opt.percentile = percentile
         list_casc_opt = list()
-        thresholds = np.array([0., 0., 0., 0., 0.])
+        
         count = 0
-        for i in range(0, 5):
+        
+        if hourly:
+            aggre_level = 5
+        else:
+            aggre_level =  level
+        
+        thresholds = np.zeros(aggre_level) #np.array([0., 0., 0., 0., 0.])
+        
+        for i in range(0, aggre_level):
             # aggregate the data
-            casc_opt_i, vdn = aggregate_precipitation(vdn)
+            casc_opt_i, vdn = aggregate_precipitation(vdn, hourly)
             thresholds[i] = casc_opt_i.threshold
             copy_of_casc_opt_i = copy.copy(casc_opt_i)
             list_casc_opt.append(copy_of_casc_opt_i)
@@ -622,7 +686,7 @@ def build_casc(hourlyDataObs,
             count = count + n_vdn
         casc_opt * (1. / count)  # transfer weighted matrices to probabilities
         casc_opt.threshold = thresholds
-
+        
         # statistics object
         if avg_stats:
             # in this case, the average statistics will be applied for all levels likewise
@@ -635,3 +699,39 @@ def build_casc(hourlyDataObs,
         list_seasonal_casc.append(stat_obj)
 
     return list_seasonal_casc
+
+def sub_level_index(daily_index, level=9, fill_gaps=False):
+    frequency = 42187500 * (2**(11-level))
+    sublevel_index = pd.date_range(start=daily_index.min(), end=daily_index.max().replace(hour=23,minute=59,second=59), freq= '%sU'% frequency)
+    # remove days that are not in the daily index:
+    time_steps = 2**level
+    if not fill_gaps and len(sublevel_index) > len(daily_index) * time_steps:
+        df = pd.DataFrame(index=sublevel_index.date, data=dict(hour=sublevel_index.hour,\
+                                                               minute=sublevel_index.minute,second=sublevel_index.second, keep=True))
+        df.index = pd.to_datetime(df.index) #got a warning at firsr: "to_datetime"is depreciated
+        dropdates = list(set(sublevel_index.date) - set(daily_index.date))
+        df.loc[dropdates, 'keep'] = False
+        df = df[df.keep]
+        sublevel_index = pd.DatetimeIndex([pd.datetime(y, m, d, h,minute,second) for y, m, d, h,minute,second in zip(df.index.year,
+                                                                                df.index.month,
+                                                                                df.index.day,
+                                                                                df.hour,df.minute,df.second)])
+
+    return sublevel_index
+
+def fmin_index(daily_index, fill_gaps=False):
+    fminindex = pd.date_range(start=daily_index.min(), end=daily_index.max().replace(hour=23,minute=59,second=59), freq='300000L')
+    # remove days that are not in the daily index:
+    if not fill_gaps and len(fminindex) > len(daily_index) * 288:
+        df = pd.DataFrame(index=fminindex.date, data=dict(hour=fminindex.hour,minute=fminindex.minute,second=fminindex.second, keep=True))
+        df.index = pd.to_datetime(df.index) #got a warning at firsr: "to_datetime"is depreciated
+        dropdates = list(set(fminindex.date) - set(daily_index.date))
+        df.loc[dropdates, 'keep'] = False
+        df = df[df.keep]
+        fminindex = pd.DatetimeIndex([pd.datetime(y, m, d, h,minute,second) for y, m, d, h,minute,second in zip(df.index.year,
+                                                                                df.index.month,
+                                                                                df.index.day,
+                                                                                df.hour,df.minute,df.second)])
+
+    return fminindex
+

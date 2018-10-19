@@ -92,7 +92,7 @@ Please find below a list of available disaggregation methods for each variable w
 
 ### Precipitation
 * `method='equal'` (P1): In order to derive hourly from daily values, the daily total is simply divided by 24 resulting in an equal distribution.
-* `method='cascade'` (P2): The cascade model is more complex and requires a parameter estimation method (`calc_precipitation_stats()`). Statistics can be calculated using different options (parameters). Using the keyword `months`, the seasons for which the statistics will be calculated independently can be specified (see example file). The keyword `percentile` allows one to adjust the threshold to separate precipitation intensities into two classes (low and high) for building the parameters. The default value is 50% (median). An additional optional argument `avg_stats` is used to decide whether statistics of all cascade levels will be averaged (default is `True`). All options previously listed are optional and can be changed to tune the disaggregation results.
+* `method='cascade'` (P2): The cascade model is more complex and requires a parameter estimation method (`calc_precipitation_stats()`). Statistics can be calculated using different options (parameters). Using the keyword `months`, the seasons for which the statistics will be calculated independently can be specified (see example file). The keyword `percentile` allows one to adjust the threshold to separate precipitation intensities into two classes (low and high) for building the parameters. The default value is 50% (median). An additional optional argument `avg_stats` is used to decide whether statistics of all cascade levels will be averaged (default is `True`). All options previously listed are optional and can be changed to tune the disaggregation results. A new feature also allows for working with 5 minutes precipitation data. Both functions `disagg_prec_cascade()`and `aggregate_precipitation()` offer switching to 5min data by setting ``hourly=False`` in the function calls. Moreover, the former function allows for different level configurations (``levels`` can be set to 9 (standard), 10, or eleven, depending on the number of bnanching levels to be considered in the cascade model).
 * `method='masterstation'` (P3). If hourly values are available for another site in the vicinity of the station considered, the cumulative sub-daily mass curve can be transferred from the station that provides hourly values to the station of interest.
 
 ## Utilities
@@ -121,7 +121,7 @@ MELODIST has also some additional specific data input/output capabilities in `me
 ## Literature
 Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.1), *Geosci. Model Dev.*, 9, 2315-2333, [doi:10.5194/gmd-9-2315-2016](https://doi.org/10.5194/gmd-9-2315-2016), 2016.
 
-Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and hydrological impacts of 21st century climate change in the Ötztal Alps (Austria) simulated using a physically based approach, *Hydrol. Earth Syst. Sci. Discuss.*, [doi:10.5194/hess-2017-309](https://doi.org/10.5194/hess-2017-309), in review, 2017. 
+Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and hydrological impacts of 21st century climate change in the Ötztal Alps (Austria) simulated using a physically based approach, *Hydrol. Earth Syst. Sci.*, 22, 1593-1614, [doi:10.5194/hess-22-1593-2018](https://doi.org/10.5194/hess-22-1593-2018), 2018. 
 
 ## Version history
 
