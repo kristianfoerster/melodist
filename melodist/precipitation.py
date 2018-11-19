@@ -216,11 +216,6 @@ def disagg_prec_cascade(precip_daily,
         else:
             meanvol = cascade_options.threshold[si]
 
-        # evaluate time step
-        if hourly:
-                dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 3600  # hours
-        else:
-                dt = (precip_daily.index[1] - precip_daily.index[0]).total_seconds() / 300  # 5min
         # evaluate mean rainfall intensity for wet boxes
         # these values should be determined during the aggregation phase!!!!!
         # mean volume threshold
@@ -405,7 +400,7 @@ def precip_master_station(precip_daily,
     return precip_hourly
 
 
-def aggregate_precipitation(vec_data,hourly=True):
+def aggregate_precipitation(vec_data,hourly=True, percentile=50):
     """Aggregates highly resolved precipitation data and creates statistics
 
     Parameters
@@ -419,14 +414,7 @@ def aggregate_precipitation(vec_data,hourly=True):
         representing statistics of the cascade model
     """
     cascade_opt = cascade.CascadeStatistics()
-
-    # get time step
-    if hourly:
-        dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 3600  # hours
-    else:
-        dt = (vec_data.index[1]-vec_data.index[0]).total_seconds() / 300  # 5min
-    
-    dt_out = dt * 2
+    cascade_opt.percentile = percentile
 
     # length of input time series
     n_in = len(vec_data)
@@ -440,7 +428,7 @@ def aggregate_precipitation(vec_data,hourly=True):
     j = 0
     for i in range(0, n_in):
         if np.mod(i, 2) != 0:
-            vdn0.append(vec_data.precip[i-1] + vec_data.precip[i])
+            vdn0.append(vec_data.precip.values[i-1] + vec_data.precip.values[i])
             vtn0.append(vec_time[i])
             j = j+1
 
@@ -483,25 +471,25 @@ def aggregate_precipitation(vec_data,hourly=True):
 
     # 2nd step: classify boxes at the upper level
     for i in range(0, n_out):
-        if vdn.precip[i] > 0.:  # rain?
+        if vdn.precip.values[i] > 0.:  # rain?
             if i == 0:  # only starting or isolated
-                if vdn.precip[i+1] > 0.:
+                if vdn.precip.values[i+1] > 0.:
                     vbtype[i] = cascade.BoxTypes.starting
                 else:
                     vbtype[i] = cascade.BoxTypes.isolated
             elif i == n_out-1:  # only ending or isolated
-                if vdn.precip[i-1] > 0.:
+                if vdn.precip.values[i-1] > 0.:
                     vbtype[i] = cascade.BoxTypes.ending
                 else:
                     vbtype[i] = cascade.BoxTypes.isolated
             else:  # neither at at the end nor at the beginning
-                if vdn.precip[i-1] == 0. and vdn.precip[i+1] == 0.:
+                if vdn.precip.values[i-1] == 0. and vdn.precip.values[i+1] == 0.:
                     vbtype[i] = cascade.BoxTypes.isolated
-                if vdn.precip[i-1] == 0. and vdn.precip[i+1] > 0.:
+                if vdn.precip.values[i-1] == 0. and vdn.precip.values[i+1] > 0.:
                     vbtype[i] = cascade.BoxTypes.starting
-                if vdn.precip[i-1] > 0. and vdn.precip[i+1] > 0.:
+                if vdn.precip.values[i-1] > 0. and vdn.precip.values[i+1] > 0.:
                     vbtype[i] = cascade.BoxTypes.enclosed
-                if vdn.precip[i-1] > 0. and vdn.precip[i+1] == 0.:
+                if vdn.precip.values[i-1] > 0. and vdn.precip.values[i+1] == 0.:
                     vbtype[i] = cascade.BoxTypes.ending
         else:
             vbtype[i] = cascade.BoxTypes.dry  # no rain
@@ -510,38 +498,38 @@ def aggregate_precipitation(vec_data,hourly=True):
     j = 0
     for i in range(0, n_in):
         if np.mod(i, 2) != 0:
-            if vdn.precip[j] > 0:
-                if vdn.precip[j] > meanvol:
+            if vdn.precip.values[j] > 0:
+                if vdn.precip.values[j] > meanvol:
                     belowabove = 1  # above mean
                 else:
                     belowabove = 0  # below mean
 
                 nb[belowabove, vbtype[j]-1] += 1
 
-                if vec_data.precip[i-1] > 0 and vec_data.precip[i] == 0:
+                if vec_data.precip.values[i-1] > 0 and vec_data.precip.values[i] == 0:
                     # P(1/0)
                     cascade_opt.p10[belowabove, vbtype[j]-1] += 1
 
-                if vec_data.precip[i-1] == 0 and vec_data.precip[i] > 0:
+                if vec_data.precip.values[i-1] == 0 and vec_data.precip.values[i] > 0:
                     # P(0/1)
                     cascade_opt.p01[belowabove, vbtype[j]-1] += 1
 
-                if vec_data.precip[i-1] > 0 and vec_data.precip[i] > 0:
+                if vec_data.precip.values[i-1] > 0 and vec_data.precip.values[i] > 0:
                     # P(x/x)
                     cascade_opt.pxx[belowabove, vbtype[j]-1] += 1
 
                     nbxx[belowabove, vbtype[j]-1] += 1
 
                     # weights
-                    r1 = vec_data.precip[i-1]
-                    r2 = vec_data.precip[i]
+                    r1 = vec_data.precip.values[i-1]
+                    r2 = vec_data.precip.values[i]
                     wxxval = r1 / (r1 + r2)
 
                     # Test
-                    if abs(r1+r2-vdn.precip[j]) > 1.E-3:
+                    if abs(r1+r2-vdn.precip.values[j]) > 1.E-3:
                         print('i=' + str(i) + ', j=' + str(j) +
                               ', r1=' + str(r1) + ", r2=" + str(r2) +
-                              ", Summe=" + str(vdn.precip[j]))
+                              ", Summe=" + str(vdn.precip.values[j]))
                         print(vec_data.index[i])
                         print(vdn.index[j])
                         print('error')
@@ -676,7 +664,8 @@ def build_casc(ObsData, hourly=True,level=9,
         
         for i in range(0, aggre_level):
             # aggregate the data
-            casc_opt_i, vdn = aggregate_precipitation(vdn, hourly)
+            casc_opt_i, vdn = aggregate_precipitation(vdn, hourly, \
+                                percentile=percentile)
             thresholds[i] = casc_opt_i.threshold
             copy_of_casc_opt_i = copy.copy(casc_opt_i)
             list_casc_opt.append(copy_of_casc_opt_i)
