@@ -92,7 +92,7 @@ Please find below a list of available disaggregation methods for each variable w
 
 ### Precipitation
 * `method='equal'` (P1): In order to derive hourly from daily values, the daily total is simply divided by 24 resulting in an equal distribution.
-* `method='cascade'` (P2): The cascade model is more complex and requires a parameter estimation method (`calc_precipitation_stats()`). Statistics can be calculated using different options (parameters). Using the keyword `months`, the seasons for which the statistics will be calculated independently can be specified (see example file). The keyword `percentile` allows one to adjust the threshold to separate precipitation intensities into two classes (low and high) for building the parameters. The default value is 50% (median). An additional optional argument `avg_stats` is used to decide whether statistics of all cascade levels will be averaged (default is `True`). All options previously listed are optional and can be changed to tune the disaggregation results. A new feature also allows for working with 5 minutes precipitation data. Both functions `disagg_prec_cascade()`and `aggregate_precipitation()` offer switching to 5min data by setting ``hourly=False`` in the function calls. Moreover, the former function allows for different level configurations (``levels`` can be set to 9 (standard), 10, or eleven, depending on the number of bnanching levels to be considered in the cascade model).
+* `method='cascade'` (P2): The cascade model is more complex and requires a parameter estimation method (`calc_precipitation_stats()`). Statistics can be calculated using different options (parameters). Using the keyword `months`, the seasons for which the statistics will be calculated independently can be specified (see example file). The keyword `percentile` allows one to adjust the threshold to separate precipitation intensities into two classes (low and high) for building the parameters. The default value is 50% (median). An additional optional argument `avg_stats` is used to decide whether statistics of all cascade levels will be averaged (default is `True`). All options previously listed are optional and can be changed to tune the disaggregation results. A new feature also allows for working with 5 minutes precipitation data. Both functions `disagg_prec_cascade()`and `aggregate_precipitation()` offer switching to 5min data by setting ``hourly=False`` in the function calls. Moreover, the former function allows for different level configurations (``levels`` can be set to 9 (standard), 10, or 11, depending on the number of branching levels to be considered in the cascade model). The usage of the cascade model for sub-hourly precipitation is demonstrated in a Jupyter notebook (see `/examples/precip5min_example.ipynb`).
 * `method='masterstation'` (P3). If hourly values are available for another site in the vicinity of the station considered, the cumulative sub-daily mass curve can be transferred from the station that provides hourly values to the station of interest.
 
 ## Utilities
@@ -118,13 +118,17 @@ Since MELODIST is based on pandas, numerous ways to import and export pandas dat
 
 MELODIST has also some additional specific data input/output capabilities in `melodist.data_io`, including functions to read data provided by the national weather services of the Netherlands (`read_single_knmi_file()`, `read_knmi_dataset()`) and Germany (`read_dwd()`). Moreover, the [SMET format](https://models.slf.ch/docserver/meteoio/SMET_specifications.pdf) is supported for reading and writing (`read_smet()`, `write_smet()`). This format is used in the [MeteoIO](https://models.slf.ch/p/meteoio) library.
 
-## Literature
+## References
 Förster, K., Hanzer, F., Winter, B., Marke, T., and Strasser, U.: An open-source MEteoroLOgical observation time series DISaggregation Tool (MELODIST v0.1.1), *Geosci. Model Dev.*, 9, 2315-2333, [doi:10.5194/gmd-9-2315-2016](https://doi.org/10.5194/gmd-9-2315-2016), 2016.
 
 Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and hydrological impacts of 21st century climate change in the Ötztal Alps (Austria) simulated using a physically based approach, *Hydrol. Earth Syst. Sci.*, 22, 1593-1614, [doi:10.5194/hess-22-1593-2018](https://doi.org/10.5194/hess-22-1593-2018), 2018. 
 
 ## Version history
 
+* 0.1.3 (21 Nov 2018):
+  * Sub-hourly precipitation disaggregation capabilities added along with a new Jupyter notebook (`/examples/precip5min_example.ipynb`)
+  * bugfix in `precipitation.py`
+  * speed-up of cascade statistics
 * 0.1.2 (21 Dec 2017):
   * new disaggregation methods: `'sine_mean'`, `'mean_course_min_max'` and `'mean_course_mean'` for temperature, `'month_hour_precip_mean'` for humidity and `'mean_course'` for radiation
   * add option to preserve daily mean values in humidity disaggregation
