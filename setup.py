@@ -14,14 +14,14 @@ processed."""
 setup(
     name='melodist',
 
-    version='0.1.2',
+    version='0.1.3',
 
     description='MELODIST: MEteoroLOgical observation time series DISaggregation Tool',
     long_description=long_description,
 
     url='https://github.com/kristianfoerster/melodist',
 
-    author='Kristian Förster, Florian Hanzer, Benjamin Winter, Thomas Marke',
+    author='Kristian Förster, Florian Hanzer, Benjamin Winter, Thomas Marke, Siling Chen',
     author_email='foerster@iww.uni-hannover.de',
 
     license='GPLv3',
@@ -40,6 +40,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     packages=find_packages(exclude=['docs']),
