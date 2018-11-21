@@ -126,7 +126,7 @@ Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and
 ## Version history
 
 * 0.1.3 (21 Nov 2018):
-  * Sub-hourly precipitation disaggregation capabilities added along with a new Jupyter notebook (`/examples/precip5min_example.ipynb`)
+  * Sub-hourly precipitation disaggregation capabilities added along with a [new Jupyter notebook](examples/precip5min_example.ipynb)
   * bugfix in `precipitation.py`
   * speed-up of cascade statistics
 * 0.1.2 (21 Dec 2017):
