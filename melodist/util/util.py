@@ -102,7 +102,7 @@ def dewpoint_temperature(temp, hum):
     ----
     temp :      temperature [K]
     hum :       relative humidity
-    
+
 
     Returns
         dewpoint temperature in K
@@ -127,7 +127,7 @@ def linregress(x, y, return_stats=False):
     x :         independent variable (series)
     y :         dependent variable (series)
     return_stats : returns statistical values as well if required (bool)
-    
+
 
     Returns
     ----
@@ -142,7 +142,7 @@ def linregress(x, y, return_stats=False):
     return retval
 
 
-def get_sun_times(dates, lon, lat, time_zone):
+def get_sun_times(dates, lon, lat, time_zone=None):
     """Computes the times of sunrise, solar noon, and sunset for each day.
 
     Parameters
@@ -150,13 +150,15 @@ def get_sun_times(dates, lon, lat, time_zone):
     dates:      datetime
     lat :       latitude in DecDeg
     lon :       longitude in DecDeg
-    time_zone : timezone
-    
+    time_zone : time zone, if None calculated from `lon`
+
 
     Returns
     ----
     DataFrame:  [sunrise, sunnoon, sunset, day length] in dec hours
     """
+    if time_zone is None:
+        time_zone = round(lon/15.0)
 
     df = pd.DataFrame(index=dates, columns=['sunrise', 'sunnoon', 'sunset', 'daylength'])
 
@@ -164,13 +166,13 @@ def get_sun_times(dates, lon, lat, time_zone):
 
     # Day angle and declination after Bourges (1985):
     day_angle_b = np.deg2rad((360. / 365.25) * (doy - 79.346))
-    
+
     declination = np.deg2rad(
         0.3723 + 23.2567 * np.sin(day_angle_b) - 0.7580 * np.cos(day_angle_b)
         + 0.1149 * np.sin(2*day_angle_b) + 0.3656 * np.cos(2*day_angle_b)
         - 0.1712 * np.sin(3*day_angle_b) + 0.0201 * np.cos(3*day_angle_b)
     )
-    
+
     # Equation of time with day angle after Spencer (1971):
     day_angle_s = 2 * np.pi * (doy - 1) / 365.
     eq_time = 12. / np.pi * (
@@ -178,11 +180,11 @@ def get_sun_times(dates, lon, lat, time_zone):
         0.001868 * np.cos(  day_angle_s) - 0.032077 * np.sin(  day_angle_s) -
         0.014615 * np.cos(2*day_angle_s) - 0.040849 * np.sin(2*day_angle_s)
         )
-    
+
     #
     standard_meridian = time_zone * 15.
     delta_lat_time = (lon - standard_meridian) * 24. / 360.
-    
+
     omega_nul_arg = -np.tan(np.deg2rad(lat)) * np.tan(declination)
     omega_nul = np.arccos(omega_nul_arg)
     sunrise = 12. * (1. - (omega_nul) / np.pi) - delta_lat_time - eq_time
@@ -191,7 +193,7 @@ def get_sun_times(dates, lon, lat, time_zone):
     # as an approximation, solar noon is independent of the below mentioned
     # cases:
     sunnoon  = 12. * (1.) - delta_lat_time - eq_time
-    
+
     # $kf 2015-11-13: special case midnight sun and polar night
     # CASE 1: MIDNIGHT SUN
     # set sunrise and sunset to values that would yield the maximum day
@@ -208,7 +210,7 @@ def get_sun_times(dates, lon, lat, time_zone):
     sunset[pos]  = sunnoon[pos]
 
     daylength = sunset - sunrise
-        
+
     # adjust if required
     sunrise[sunrise < 0] += 24
     sunset[sunset > 24] -= 24
@@ -297,9 +299,9 @@ def drop_incomplete_days(dataframe, shift=0):
     except:
         print('Error: Invalid dataframe.')
         return dataframe
-    
-    delete = list()  
-    
+
+    delete = list()
+
     # drop heading lines if required
     for i in range(0, n):
         if dataframe.index.hour[i] == first and dataframe.index.minute[i] == 0:

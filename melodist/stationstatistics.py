@@ -38,11 +38,13 @@ class StationStatistics(object):
     generally associated to a Station object for which this infomration
     is valid.
     """
-    def __init__(self, data=None, lon=None, lat=None, timezone=None):
+    def __init__(self, data=None, lon=None, lat=None, time_zone=None):
         self._data = None
         self._lon = lon
         self._lat = lat
-        self._timezone = timezone
+        self._time_zone = time_zone
+        if time_zone is None and lon is not None:
+            self._time_zone = round(lon/15.0)
 
         if data is not None:
             self.data = data
@@ -83,7 +85,7 @@ class StationStatistics(object):
         months :        Months for each seasons to be used for statistics (array of numpy array, default=1-12, e.g., [np.arange(12) + 1])
         avg_stats :     average statistics for all levels True/False (default=True)
         percentile :    percentil for splitting the dataset in small and high intensities (default=50)
-        
+
         """
         if months is None:
             months = [np.arange(12) + 1]
@@ -112,7 +114,7 @@ class StationStatistics(object):
         """
         Calculates statistics in order to derive diurnal patterns of temperature
         """
-        self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
+        self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._time_zone)
         self.temp.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.temp, normalize=True)
 
     def calc_radiation_stats(self, data_daily=None, day_length=None, how='all'):
@@ -135,7 +137,7 @@ class StationStatistics(object):
         if data_daily is not None:
             pot_rad = melodist.potential_radiation(
                 melodist.util.hourly_index(data_daily.index),
-                self._lon, self._lat, self._timezone)
+                self._lon, self._lat, self._time_zone)
             pot_rad_daily = pot_rad.resample('D').mean()
             obs_rad_daily = self.data.glob.resample('D').mean()
 

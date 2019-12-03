@@ -212,16 +212,18 @@ def disaggregate_temperature(data_daily,
     return temp_disagg
 
 
-def get_shift_by_data(temp_hourly, lon, lat, time_zone):
+def get_shift_by_data(temp_hourly, lon, lat, time_zone=None):
     '''function to get max temp shift (monthly) by hourly data
-    
+
     Parameters
     ----
-    hourly_data_obs : observed hourly data 
+    hourly_data_obs : observed hourly data
     lat :             latitude in DezDeg
     lon :             longitude in DezDeg
-    time_zone:        timezone
+    time_zone:        time zone, if None calculated from `lon`
     '''
+    if time_zone is None:
+        time_zone = round(lon/15.0)
     daily_index = temp_hourly.resample('D').mean().index
     sun_times = melodist.util.get_sun_times(daily_index, lon, lat, time_zone)
 

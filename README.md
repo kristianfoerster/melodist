@@ -12,7 +12,7 @@ An [example file](examples/examples.ipynb) is provided along the package itself 
 In the framework of MELODIST a station object includes all relevant information including metadata and time series. A station is generated using the constructor method:
 
 ```python
-s = melodist.Station(lon=longitude, lat=latitude, timezone=timezone)
+s = melodist.Station(lon=longitude, lat=latitude, time_zone=timezone)
 ```
 
 Data is simply added by assignment (e.g., the data frame `data_obs_daily`):
