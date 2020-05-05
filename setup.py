@@ -14,7 +14,7 @@ processed."""
 setup(
     name='melodist',
 
-    version='0.1.3',
+    version='0.1.4',
 
     description='MELODIST: MEteoroLOgical observation time series DISaggregation Tool',
     long_description=long_description,
