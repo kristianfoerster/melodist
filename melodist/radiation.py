@@ -61,12 +61,12 @@ def disaggregate_radiation(data_daily,
     if method not in ('pot_rad', 'pot_rad_via_ssd', 'pot_rad_via_bc', 'mean_course'):
         raise ValueError('Invalid option')
 
-    glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
+    glob_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index), dtype=float)
 
     if method == 'mean_course':
         assert mean_course is not None
 
-        pot_rad = pd.Series(index=glob_disagg.index)
+        pot_rad = pd.Series(index=glob_disagg.index, dtype=float)
         pot_rad[:] = mean_course.unstack().loc[list(zip(pot_rad.index.month, pot_rad.index.hour))].values
     else:
         assert pot_rad is not None

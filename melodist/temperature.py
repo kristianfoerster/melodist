@@ -59,7 +59,7 @@ def disaggregate_temperature(data_daily,
     ):
         raise ValueError('Invalid option')
 
-    temp_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index))
+    temp_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index), dtype=float)
 
     if method in ('sine_min_max', 'sine_mean', 'sine'):
         # for this option assume time of minimum and maximum and fit cosine function through minimum and maximum temperatures
@@ -130,7 +130,7 @@ def disaggregate_temperature(data_daily,
         max_val = locdf.max_val_cur.copy()
         max_val[max_val.index.hour < locdf.min_loc] = locdf.max_val_before
 
-        temp_disagg = pd.Series(index=min_val.index)
+        temp_disagg = pd.Series(index=min_val.index, dtype=float)
 
         if method in ('sine_min_max', 'sine'):
             delta_val = max_val - min_val
@@ -204,7 +204,7 @@ def disaggregate_temperature(data_daily,
     elif method == 'mean_course_mean':
         data_daily_as_hourly = data_daily.reindex(temp_disagg.index, method='ffill', limit=23)
         dtr = data_daily_as_hourly.tmax - data_daily_as_hourly.tmin
-        mc = pd.Series(index=temp_disagg.index)
+        mc = pd.Series(index=temp_disagg.index, dtype=float)
         mean_course_zeromean = mean_course - mean_course.mean()  # shift mean course so that the daily mean is 0
         mc[:] = mean_course_zeromean.unstack().loc[list(zip(temp_disagg.index.month, temp_disagg.index.hour))].values
         temp_disagg[:] = data_daily_as_hourly.temp + dtr * mc

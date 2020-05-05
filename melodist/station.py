@@ -324,7 +324,7 @@ class Station(object):
         if method == 'equal':
             precip_disagg = melodist.disagg_prec(self.data_daily, method=method, shift=shift)
         elif method == 'cascade':
-            precip_disagg = pd.Series(index=self.data_disagg.index)
+            precip_disagg = pd.Series(index=self.data_disagg.index, dtype=float)
 
             for months, stats in zip(self.statistics.precip.months, self.statistics.precip.stats):
                 precip_daily = melodist.seasonal_subset(self.data_daily.precip, months=months)

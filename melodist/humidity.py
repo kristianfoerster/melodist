@@ -96,7 +96,7 @@ def disaggregate_humidity(data_daily, method='equal', temp=None,
         assert month_hour_precip_mean is not None
 
         precip_equal = melodist.distribute_equally(data_daily.precip)  # daily precipitation equally distributed to hourly values
-        hum_disagg = pd.Series(index=precip_equal.index)
+        hum_disagg = pd.Series(index=precip_equal.index, dtype=float)
         locs = list(zip(hum_disagg.index.month, hum_disagg.index.hour, precip_equal > 0))
         hum_disagg[:] = month_hour_precip_mean.loc[locs].values
 
