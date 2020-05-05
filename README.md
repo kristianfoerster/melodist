@@ -125,6 +125,8 @@ Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and
 
 ## Version history
 
+* 0.1.4 (05 May 2020):
+  * Upgraded to warrant pandas compatibility
 * 0.1.3 (21 Nov 2018):
   * Sub-hourly precipitation disaggregation capabilities added along with a [new Jupyter notebook](examples/precip5min_example.ipynb)
   * bugfix in `precipitation.py`
