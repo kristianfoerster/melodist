@@ -91,7 +91,7 @@ class Station(object):
         assert df.index.is_monotonic_increasing
 
         if df.index.freq is None:  # likely some days are missing
-            df = df.reindex(pd.DatetimeIndex(start=df.index[0], end=df.index[-1], freq='D'))
+            df = df.reindex(pd.date_range(start=df.index[0], end=df.index[-1], freq='D'))
 
         for var in 'tmin', 'tmax', 'tmean':
             if var in df:

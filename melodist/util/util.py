@@ -30,7 +30,7 @@ import scipy.stats
 
 
 def hourly_index(daily_index, fill_gaps=False):
-    index = pd.DatetimeIndex(start=daily_index.min(), end=daily_index.max().replace(hour=23), freq='H')
+    index = pd.date_range(start=daily_index.min(), end=daily_index.max().replace(hour=23), freq='H')
 
     # remove days that are not in the daily index:
     if not fill_gaps and len(index) > len(daily_index) * 24:
@@ -327,7 +327,7 @@ def prepare_interpolation_data(data_daily, column_hours):
     data = pd.Series()
 
     for column, hour in column_hours.items():
-        index = pd.DatetimeIndex(start=start_date.replace(hour=hour), end=end_date.replace(hour=hour), freq='D')
+        index = pd.date_range(start=start_date.replace(hour=hour), end=end_date.replace(hour=hour), freq='D')
         s = pd.Series(index=index, data=data_daily[column].values)
         data = data.append(s)
 
