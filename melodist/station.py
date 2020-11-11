@@ -31,7 +31,7 @@ import pandas as pd
 
 class Station(object):
     """
-    Class representing meteorological stations including all relevant 
+    Class representing meteorological stations including all relevant
     information such as metadata and meteorological time series (observed
     and disaggregated)
     """
@@ -54,10 +54,10 @@ class Station(object):
         'wind',
     ]
 
-    def __init__(self, id=None, name=None, lon=None, lat=None, timezone=None, data_daily=None):
+    def __init__(self, id=None, name=None, lon=None, lat=None, time_zone=None, data_daily=None):
         self._lon = None
         self._lat = None
-        self._timezone = None
+        self._time_zone = None
         self._statistics = None
         self._data_daily = None
         self._data_disagg = None
@@ -67,7 +67,9 @@ class Station(object):
         self.name = name
         self.lon = lon
         self.lat = lat
-        self.timezone = timezone
+        self.time_zone = time_zone
+        if time_zone is None and lon is not None:
+            self.time_zone = round(lon/15.0)
         self.sun_times = None
 
         if data_daily is not None:
@@ -104,7 +106,7 @@ class Station(object):
         df = pd.DataFrame(index=index, columns=Station._columns_hourly, dtype=float)
         self._data_disagg = df
 
-        if self.timezone is not None:
+        if self.time_zone is not None:
             self.calc_sun_times()
 
     @property
@@ -132,19 +134,19 @@ class Station(object):
         self.statistics._lat = lat
 
     @property
-    def timezone(self):
+    def time_zone(self):
         """
-        Timezone indicates the differnce in hours calculated from UTC
-        
-        Negative values indicate timezones later than UTC, i.e. west of 0 deg
+        time_zone indicates the differnce in hours calculated from UTC
+
+        Negative values indicate time_zones later than UTC, i.e. west of 0 deg
         long. Positive values indicate the reverse.
         """
-        return self._timezone
+        return self._time_zone
 
-    @timezone.setter
-    def timezone(self, timezone):
-        self._timezone = timezone
-        self.statistics._timezone = timezone
+    @time_zone.setter
+    def time_zone(self, time_zone):
+        self._time_zone = time_zone
+        self.statistics._time_zone = time_zone
 
     @property
     def statistics(self):
@@ -159,7 +161,7 @@ class Station(object):
         assert isinstance(s, melodist.StationStatistics)
         s._lon = self.lon
         s._lat = self.lat
-        s._timezone = self.timezone
+        s._time_zone = self.time_zone
         self._statistics = s
 
     @property
@@ -176,7 +178,7 @@ class Station(object):
         Computes the times of sunrise, solar noon, and sunset for each day.
         """
 
-        self.sun_times = melodist.util.get_sun_times(self.data_daily.index, self.lon, self.lat, self.timezone)
+        self.sun_times = melodist.util.get_sun_times(self.data_daily.index, self.lon, self.lat, self.time_zone)
 
     def disaggregate_wind(self, method='equal'):
         """
@@ -368,7 +370,7 @@ class Station(object):
             self.calc_sun_times()
 
         if pot_rad is None and method != 'mean_course':
-            pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
+            pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.time_zone)
 
         self.data_disagg.glob = melodist.disaggregate_radiation(
             self.data_daily,

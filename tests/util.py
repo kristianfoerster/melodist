@@ -20,7 +20,7 @@ def setup_station():
 
     df_daily = melodist.util.daily_from_hourly(df_hourly)
 
-    station = melodist.Station(lon=8.86, lat=51.00, timezone=1, data_daily=df_daily)
+    station = melodist.Station(lon=8.86, lat=51.00, time_zone=1, data_daily=df_daily)
     station.statistics = melodist.StationStatistics(data=df_hourly)
 
     return station

@@ -53,7 +53,7 @@ def disaggregate_radiation(data_daily,
         angstr_a: parameter a of the Angstrom model (intercept)
         angstr_b: parameter b of the Angstrom model (slope)
         mean_course: monthly values of the mean hourly radiation course
-        
+
     Returns:
         Disaggregated hourly values of shortwave radiation.
     """
@@ -93,7 +93,7 @@ def disaggregate_radiation(data_daily,
     return glob_disagg
 
 
-def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slope_azimuth=0,
+def potential_radiation(dates, lon, lat, time_zone=None, terrain_slope=0, terrain_slope_azimuth=0,
                         cloud_fraction=0, split=False):
     """
     Calculate potential shortwave radiation for a specific location and time.
@@ -114,7 +114,7 @@ def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slop
         Longitude (degrees)
     lat : float
         Latitude (degrees)
-    timezone : float
+    time_zone : float
         Time zone
     terrain_slope : float, default 0
         Terrain slope as defined in Liston & Elder (2006) (eq. 12)
@@ -140,7 +140,10 @@ def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slop
     solar_decline = tropic_of_cancer * np.cos(2.0 * np.pi * (day_of_year - solstice) / days_per_year)
 
     # compute the sun hour angle in rad
-    standard_meridian = timezone * 15.
+    if time_zone is None:
+        standard_meridian = round(lon/15.0) * 15.0
+    else:
+        standard_meridian = time_zone * 15.0
     delta_lat_time = (lon - standard_meridian) * 24. / 360.
     hour_angle = np.pi * (((dates_hour + dates_minute / 60. + delta_lat_time) / 12.) - 1.)
 
