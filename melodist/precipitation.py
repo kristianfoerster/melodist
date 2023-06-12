@@ -438,7 +438,7 @@ def aggregate_precipitation(vec_data,hourly=True, percentile=50):
     n_out = len(vdn)
 
     # series of box types:
-    vbtype = np.zeros((n_out, ), dtype=np.int)
+    vbtype = np.zeros((n_out, ), dtype=int)
 
     # fields for empirical probabilities
     # counts
@@ -606,7 +606,7 @@ def seasonal_subset(dataframe,
         if month_num == 0:
             df = df_cur
         else:
-            df = df.append(df_cur)
+            df = pd.concat([df, df_cur])
 
     return df.sort_index()
 

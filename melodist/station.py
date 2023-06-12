@@ -84,7 +84,7 @@ class Station(object):
     @data_daily.setter
     def data_daily(self, df):
         assert isinstance(df, pd.DataFrame)
-        assert df.index.is_all_dates
+        assert isinstance(df.index, pd.DatetimeIndex)
         # for col in df:
         #     assert col in Station._columns_daily
         assert df.index.resolution == 'day'

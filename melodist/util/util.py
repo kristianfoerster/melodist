@@ -317,7 +317,7 @@ def drop_incomplete_days(dataframe, shift=0):
             dropped += 1
     # print("The following rows have been dropped (%i in total):" % dropped)
     # print(delete)
-    return dataframe.drop(dataframe.index[[delete]])
+    return dataframe.drop(index=dataframe.index[delete])
 
 
 def prepare_interpolation_data(data_daily, column_hours):
@@ -385,7 +385,7 @@ def calculate_mean_daily_course_by_month(data_hourly, normalize=False):
     data_hourly.index.name = None
 
     df = data_hourly.groupby([data_hourly.index.month, data_hourly.index.hour]).mean()
-    df = df.reset_index().pivot('level_1', 'level_0')
+    df = df.reset_index().pivot(columns='level_0', index='level_1')
     df.columns = df.columns.droplevel()  # remove MultiIndex
     df.columns.name = None
     df.index.name = None

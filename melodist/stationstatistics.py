@@ -69,7 +69,7 @@ class StationStatistics(object):
     @data.setter
     def data(self, df):
         assert isinstance(df, pd.DataFrame)
-        assert df.index.is_all_dates
+        assert isinstance(df.index, pd.DatetimeIndex)
         assert df.index.resolution == 'hour'
 
         self._data = df.copy()
