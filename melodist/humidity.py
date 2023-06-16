@@ -113,7 +113,7 @@ def calculate_dewpoint_regression(hourly_data_obs, return_stats=False):
     temphum = hourly_data_obs[['temp', 'hum']]
 
     tdew = melodist.util.dewpoint_temperature(temphum.temp, temphum.hum).resample('D').mean()
-    tmin = temphum.temp.groupby(temphum.index.date).min()
+    tmin = temphum.temp.groupby(temphum.index.normalize()).min()
     df = pd.DataFrame(data=dict(tmin=tmin, tdew=tdew)).dropna(how='any')
 
     return util.linregress(df.tmin, df.tdew, return_stats=return_stats)
