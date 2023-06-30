@@ -8,7 +8,7 @@ import melodist
 
 
 def _cosine_function(x, a, b, t_shift):
-    """genrates a diurnal course of windspeed accroding to the cosine function
+    """Generate a diurnal course of windspeed according to the cosine function
 
     Args:
         x: series of euqally distributed windspeed values
@@ -25,7 +25,7 @@ def _cosine_function(x, a, b, t_shift):
 
 
 def disaggregate_wind(wind_daily, method='equal', a=None, b=None, t_shift=None):
-    """general function for windspeed disaggregation
+    """General function for windspeed disaggregation
 
     Args:
         wind_daily: daily values
@@ -55,7 +55,7 @@ def disaggregate_wind(wind_daily, method='equal', a=None, b=None, t_shift=None):
 
 
 def fit_cosine_function(wind):
-    """fits a cosine function to observed hourly windspeed data
+    """Fit a cosine function to observed hourly windspeed data
 
     Args:
         wind: observed hourly windspeed data

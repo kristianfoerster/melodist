@@ -247,13 +247,13 @@ def disaggregate_temperature(
 
 
 def get_shift_by_data(temp_hourly, lon, lat, time_zone):
-    '''function to get max temp shift (monthly) by hourly data
+    '''Get maximum temperature shift (monthly) from hourly data
 
     Parameters
     ----
     hourly_data_obs : observed hourly data
-    lat :             latitude in DezDeg
-    lon :             longitude in DezDeg
+    lat :             latitude (degrees)
+    lon :             longitude (degrees)
     time_zone:        timezone
     '''
     daily_index = temp_hourly.resample('D').mean().index
