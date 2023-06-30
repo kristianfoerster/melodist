@@ -1,6 +1,7 @@
-import glob
-import pandas as pd
 import collections
+import glob
+
+import pandas as pd
 
 
 def read_smet(filename, mode):

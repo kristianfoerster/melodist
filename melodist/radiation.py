@@ -1,8 +1,10 @@
-from __future__ import print_function, division, absolute_import
-import melodist.util
-import pandas as pd
+from __future__ import absolute_import, division, print_function
+
 import numpy as np
+import pandas as pd
 import scipy.optimize
+
+import melodist.util
 
 """
 This routine diaggregates daily values of global radiation data to hourly values

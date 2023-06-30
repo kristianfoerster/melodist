@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 long_description = """MELODIST is an open-source toolbox written in Python for
 disaggregating daily meteorological time series to hourly time steps. The

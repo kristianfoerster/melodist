@@ -1,7 +1,9 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
+
+import pandas as pd
+
 import melodist
 import melodist.util
-import pandas as pd
 
 
 class Station(object):

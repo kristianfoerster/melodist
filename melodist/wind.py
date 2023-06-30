@@ -1,8 +1,10 @@
-from __future__ import print_function, division, absolute_import
-import melodist
+from __future__ import absolute_import, division, print_function
+
 import numpy as np
 import pandas as pd
 import scipy.optimize
+
+import melodist
 
 
 def _cosine_function(x, a, b, t_shift):
