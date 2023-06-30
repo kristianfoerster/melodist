@@ -666,7 +666,7 @@ def build_casc(ObsData, hourly=True,level=9,
             # aggregate the data
             casc_opt_i, vdn = aggregate_precipitation(vdn, hourly, \
                                 percentile=percentile)
-            thresholds[i] = casc_opt_i.threshold
+            thresholds[i] = casc_opt_i.threshold[0]
             copy_of_casc_opt_i = copy.copy(casc_opt_i)
             list_casc_opt.append(copy_of_casc_opt_i)
             n_vdn = len(vdn)
