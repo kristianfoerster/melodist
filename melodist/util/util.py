@@ -230,7 +230,7 @@ def get_sun_times(dates, lon, lat, time_zone):
 def detect_gaps(dataframe, timestep, print_all=False, print_max=5, verbose=True):
     """checks if a given dataframe contains gaps and returns the number of gaps
 
-    This funtion checks if a dataframe contains any gaps for a given temporal
+    This function checks if a dataframe contains any gaps for a given temporal
     resolution that needs to be specified in seconds. The number of gaps
     detected in the dataframe is returned.
 
@@ -268,7 +268,8 @@ def detect_gaps(dataframe, timestep, print_all=False, print_max=5, verbose=True)
                     msg_counter += 1
                 if msg_counter == print_max and verbose and not warning_printed:
                     print(
-                        'Warning: Only the first %i gaps have been listed. Try to increase print_max parameter to show more details.'
+                        'Warning: Only the first %i gaps have been listed. Try to increase '
+                        'print_max parameter to show more details.'
                         % msg_counter
                     )
                     warning_printed = True
@@ -280,7 +281,7 @@ def detect_gaps(dataframe, timestep, print_all=False, print_max=5, verbose=True)
 def drop_incomplete_days(dataframe, shift=0):
     """truncates a given dataframe to full days only
 
-    This funtion truncates a given pandas dataframe (time series) to full days
+    This function truncates a given pandas dataframe (time series) to full days
     only, thus dropping leading and tailing hours of incomplete days. Please
     note that this methodology only applies to hourly time series.
 

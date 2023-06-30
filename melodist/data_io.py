@@ -214,7 +214,8 @@ def write_smet(filename, data, metadata, nodata_value=-999, mode='h', check_nan=
     metadata:     header to write input as dict
     nodata_value: Nodata Value to write/use
     mode:         defines if to write daily ("d") or continuos data (default 'h')
-    check_nan:    will check if only nans in data and if true will not write this colums (default True)
+    check_nan:    will check if only nans in data and if true will not write this columns
+                  (default True)
     """
 
     # dictionary

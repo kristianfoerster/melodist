@@ -195,12 +195,13 @@ class Station(object):
                 Mean daily humidity is duplicated for the 24 hours of the day. (Default)
 
             ``minimal``:
-                Calculates humidity from daily dew point temperature by setting the dew point temperature
-                equal to the daily minimum temperature.
+                Calculates humidity from daily dew point temperature by setting the dew point
+                temperature equal to the daily minimum temperature.
 
             ``dewpoint_regression``:
-                Calculates humidity from daily dew point temperature by calculating dew point temperature
-                using ``Tdew = a * Tmin + b``, where ``a`` and ``b`` are determined by calibration.
+                Calculates humidity from daily dew point temperature by calculating dew point
+                temperature using ``Tdew = a * Tmin + b``, where ``a`` and ``b`` are determined by
+                calibration.
 
             ``linear_dewpoint_variation``:
                 Calculates humidity from hourly dew point temperature by assuming a linear dew point
@@ -214,7 +215,8 @@ class Station(object):
                 derived from observations.
 
         preserve_daily_mean : bool, optional
-            If True, correct the daily mean values of the disaggregated data with the observed daily means.
+            If True, correct the daily mean values of the disaggregated data with the observed daily
+            means.
         """
         self.data_disagg.hum = melodist.disaggregate_humidity(
             self.data_daily,
@@ -264,7 +266,8 @@ class Station(object):
                 Minimum/maximum temperature are assumed to occur at sunrise / solar noon + 2 h.
 
             ``sun_loc_shift``:
-                Minimum/maximum temperature are assumed to occur at sunrise / solar noon + monthly mean shift.
+                Minimum/maximum temperature are assumed to occur at sunrise / solar noon + monthly
+                mean shift.
 
         mod_nighttime : bool, optional
             Use linear interpolation between minimum and maximum temperature.
@@ -401,8 +404,13 @@ class Station(object):
         We can use the interpolation functions provided by pandas/scipy to derive
         hourly values:
 
-        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19}) # linear interpolation (default)
-        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19}, method='cubic') # cubic spline
+        >>> # Linear interpolation (default)
+        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19})
+        >>> # Cubic spline interpolation
+        >>> mystation.data_hourly.temp = mystation.interpolate(
+        >>>     {'T7': 7, 'T14': 14, 'T19': 19},
+        >>>     method='cubic',
+        >>> )
         """
         kwargs = dict(kwargs, method=method, limit=limit, limit_direction=limit_direction)
         data = melodist.util.prepare_interpolation_data(self.data_daily, column_hours)

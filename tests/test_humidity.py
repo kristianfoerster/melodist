@@ -24,4 +24,9 @@ class TestHumidity(MelodistTestCase):
         hd = station.data_disagg.hum
         hdd = hd.resample('D').mean()
 
-        assert np.allclose(hdd, station.statistics.data.hum.resample('D').mean(), atol=1e-3, equal_nan=True)
+        assert np.allclose(
+            hdd,
+            station.statistics.data.hum.resample('D').mean(),
+            atol=1e-3,
+            equal_nan=True,
+        )

@@ -39,7 +39,8 @@ def disaggregate_temperature(
     temp_disagg = pd.Series(index=melodist.util.hourly_index(data_daily.index), dtype=float)
 
     if method in ('sine_min_max', 'sine_mean', 'sine'):
-        # for this option assume time of minimum and maximum and fit cosine function through minimum and maximum temperatures
+        # for this option assume time of minimum and maximum and fit cosine function through minimum
+        # and maximum temperatures
         hours_per_day = 24
         default_shift_hours = 2
 
@@ -103,13 +104,15 @@ def disaggregate_temperature(
         locdf_day = locdf
         locdf = locdf.reindex(temp_disagg.index, method='ffill')
 
-        # whenever we are before the maximum for the current day, use minimum value of current day for cosine function fitting
-        # once we have passed the maximum value use the minimum for next day to ensure smooth transitions
+        # whenever we are before the maximum for the current day, use minimum value of current day
+        # for cosine function fitting once we have passed the maximum value use the minimum for next
+        # day to ensure smooth transitions
         min_val = locdf.min_val_next.copy()
         min_val[min_val.index.hour < locdf.max_loc] = locdf.min_val_cur
 
-        # whenever we are before the minimum for the current day, use maximum value of day before for cosine function fitting
-        # once we have passed the minimum value use the maximum for the current day to ensure smooth transitions
+        # whenever we are before the minimum for the current day, use maximum value of day before
+        # for cosine function fitting once we have passed the minimum value use the maximum for the
+        # current day to ensure smooth transitions
         max_val = locdf.max_val_cur.copy()
         max_val[max_val.index.hour < locdf.min_loc] = locdf.max_val_before
 
@@ -185,7 +188,9 @@ def disaggregate_temperature(
             temp_polars = temp_disagg.loc[polars_index_hourly].copy()
             transition_days = polars[polars.diff()].astype(
                 int
-            )  # 0 where transition from polar to "normal" mode, 1 where transition from normal to polar
+            )
+            # (0 where transition from polar to "normal" mode, 1 where transition from normal to
+            # polar)
 
             if len(transition_days) > 0:
                 polar_to_normal_days = transition_days.index[transition_days == 0]
