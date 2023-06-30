@@ -51,4 +51,8 @@ setup(
         'scipy',
         'pandas>=0.18.0',
     ],
+
+    extras_require={
+        'test': ['pytest'],
+    },
 )
