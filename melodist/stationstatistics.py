@@ -13,6 +13,7 @@ class StationStatistics(object):
     generally associated to a Station object for which this infomration
     is valid.
     """
+
     def __init__(self, data=None, lon=None, lat=None, timezone=None):
         self._data = None
         self._lon = lon
@@ -58,13 +59,15 @@ class StationStatistics(object):
         months :        Months for each seasons to be used for statistics (array of numpy array, default=1-12, e.g., [np.arange(12) + 1])
         avg_stats :     average statistics for all levels True/False (default=True)
         percentile :    percentil for splitting the dataset in small and high intensities (default=50)
-        
+
         """
         if months is None:
             months = [np.arange(12) + 1]
 
         self.precip.months = months
-        self.precip.stats = melodist.build_casc(self.data, months=months, avg_stats=avg_stats, percentile=percentile)
+        self.precip.stats = melodist.build_casc(
+            self.data, months=months, avg_stats=avg_stats, percentile=percentile
+        )
 
     def calc_wind_stats(self):
         """
@@ -87,8 +90,12 @@ class StationStatistics(object):
         """
         Calculates statistics in order to derive diurnal patterns of temperature
         """
-        self.temp.max_delta = melodist.get_shift_by_data(self.data.temp, self._lon, self._lat, self._timezone)
-        self.temp.mean_course = melodist.util.calculate_mean_daily_course_by_month(self.data.temp, normalize=True)
+        self.temp.max_delta = melodist.get_shift_by_data(
+            self.data.temp, self._lon, self._lat, self._timezone
+        )
+        self.temp.mean_course = melodist.util.calculate_mean_daily_course_by_month(
+            self.data.temp, normalize=True
+        )
 
     def calc_radiation_stats(self, data_daily=None, day_length=None, how='all'):
         """
@@ -109,8 +116,8 @@ class StationStatistics(object):
 
         if data_daily is not None:
             pot_rad = melodist.potential_radiation(
-                melodist.util.hourly_index(data_daily.index),
-                self._lon, self._lat, self._timezone)
+                melodist.util.hourly_index(data_daily.index), self._lon, self._lat, self._timezone
+            )
             pot_rad_daily = pot_rad.resample('D').mean()
             obs_rad_daily = self.data.glob.resample('D').mean()
 
@@ -168,6 +175,7 @@ class StationStatistics(object):
         ----------
         filename:    output file that holds statistics data
         """
+
         def json_encoder(obj):
             if isinstance(obj, pd.DataFrame) or isinstance(obj, pd.Series):
                 if isinstance(obj.index, pd.MultiIndex):
@@ -181,13 +189,7 @@ class StationStatistics(object):
             else:
                 raise TypeError('%s not supported' % type(obj))
 
-        d = dict(
-            temp=self.temp,
-            wind=self.wind,
-            precip=self.precip,
-            hum=self.hum,
-            glob=self.glob
-        )
+        d = dict(temp=self.temp, wind=self.wind, precip=self.precip, hum=self.hum, glob=self.glob)
 
         j = json.dumps(d, default=json_encoder, indent=4)
 
@@ -206,6 +208,7 @@ class StationStatistics(object):
         ----------
         filename:    input file that holds statistics data
         """
+
         def json_decoder(d):
             if 'p01' in d and 'pxx' in d:  # we assume this is a CascadeStatistics object
                 return melodist.cascade.CascadeStatistics.from_dict(d)
@@ -224,14 +227,20 @@ class StationStatistics(object):
         stats.glob.update(d['glob'])
 
         if stats.temp.max_delta is not None:
-            stats.temp.max_delta = pd.read_json(json.dumps(stats.temp.max_delta), typ='series').sort_index()
+            stats.temp.max_delta = pd.read_json(
+                json.dumps(stats.temp.max_delta), typ='series'
+            ).sort_index()
 
         if stats.temp.mean_course is not None:
-            mc = pd.read_json(json.dumps(stats.temp.mean_course), typ='frame').sort_index()[np.arange(1, 12 + 1)]
+            mc = pd.read_json(json.dumps(stats.temp.mean_course), typ='frame').sort_index()[
+                np.arange(1, 12 + 1)
+            ]
             stats.temp.mean_course = mc.sort_index()[np.arange(1, 12 + 1)]
 
         if stats.hum.month_hour_precip_mean is not None:
-            mhpm = pd.read_json(json.dumps(stats.hum.month_hour_precip_mean), typ='frame').sort_index()
+            mhpm = pd.read_json(
+                json.dumps(stats.hum.month_hour_precip_mean), typ='frame'
+            ).sort_index()
             mhpm = mhpm.set_index(['level_0', 'level_1', 'level_2'])  # convert to MultiIndex
             mhpm = mhpm.squeeze()  # convert to Series
             mhpm = mhpm.rename_axis([None, None, None])  # remove index labels

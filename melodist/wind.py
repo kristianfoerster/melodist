@@ -13,7 +13,7 @@ def _cosine_function(x, a, b, t_shift):
         a: parameter a for the cosine function
         b: parameter b for the cosine function
         t_shift: parameter t_shift for the cosine function
-        
+
     Returns:
         series including diurnal course of windspeed.
     """
@@ -31,7 +31,7 @@ def disaggregate_wind(wind_daily, method='equal', a=None, b=None, t_shift=None):
         a: parameter a for the cosine function
         b: parameter b for the cosine function
         t_shift: parameter t_shift for the cosine function
-        
+
     Returns:
         Disaggregated hourly values of windspeed.
     """
@@ -43,9 +43,11 @@ def disaggregate_wind(wind_daily, method='equal', a=None, b=None, t_shift=None):
         wind_disagg = wind_eq
     elif method == 'cosine':
         assert None not in (a, b, t_shift)
-        wind_disagg = _cosine_function(np.array([wind_eq.values, wind_eq.index.hour]), a, b, t_shift)
+        wind_disagg = _cosine_function(
+            np.array([wind_eq.values, wind_eq.index.hour]), a, b, t_shift
+        )
     elif method == 'random':
-        wind_disagg = wind_eq * (-np.log(np.random.rand(len(wind_eq))))**0.3
+        wind_disagg = wind_eq * (-np.log(np.random.rand(len(wind_eq)))) ** 0.3
 
     return wind_disagg
 
@@ -55,12 +57,14 @@ def fit_cosine_function(wind):
 
     Args:
         wind: observed hourly windspeed data
-        
+
     Returns:
         parameters needed to generate diurnal features of windspeed using a cosine function
     """
     wind_daily = wind.groupby(wind.index.date).mean()
-    wind_daily_hourly = pd.Series(index=wind.index, data=wind_daily.loc[wind.index.date].values)  # daily values evenly distributed over the hours
+    wind_daily_hourly = pd.Series(
+        index=wind.index, data=wind_daily.loc[wind.index.date].values
+    )  # daily values evenly distributed over the hours
 
     df = pd.DataFrame(data=dict(daily=wind_daily_hourly, hourly=wind)).dropna(how='any')
     x = np.array([df.daily, df.index.hour])
