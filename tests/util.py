@@ -49,5 +49,3 @@ def notna_temp_days(dd, kind):
                .all(axis=1))
 
     return pos
-
-
