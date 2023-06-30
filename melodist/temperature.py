@@ -183,7 +183,7 @@ def disaggregate_temperature(
             temp_disagg[getting_colders_max_loc] = locdf_day.min_val_cur[getting_colders].values
 
             temp_polars = temp_disagg.loc[polars_index_hourly].copy()
-            transition_days = polars[polars.diff() == True].astype(
+            transition_days = polars[polars.diff()].astype(
                 int
             )  # 0 where transition from polar to "normal" mode, 1 where transition from normal to polar
 
