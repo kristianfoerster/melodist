@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 100
+target-version = 'py37'
+
+[tool.black]
+line-length = 100
+skip-string-normalization = true
+target-version = ['py37']
+include = '\.pyi?$'
