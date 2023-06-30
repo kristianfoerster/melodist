@@ -567,18 +567,12 @@ def aggregate_precipitation(vec_data, hourly=True, percentile=50):
         print("Warning (weighting probabilities):")
         print(
             "The derived cascade statistics are not valid as some probabilities are undefined! ",
-            end="",
-        )
-        print(
             "Try to use longer time series that might be more "
-            "appropriate for deriving statistics. ",
-            end="",
+            "appropriate for deriving statistics. "
+            "As a workaround, default values according to equally distributed probabilities "
+            "will be applied... ",
+            end='',
         )
-        print(
-            "As a workaround, default values according to equally distributed probabilities ",
-            end="",
-        )
-        print("will be applied...", end="")
         cascade_opt.wxx[np.isnan(cascade_opt.wxx)] = 1.0 / 7.0
         wxx = np.zeros((2, 4))
         for k in range(0, 7):
