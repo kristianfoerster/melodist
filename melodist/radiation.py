@@ -1,48 +1,45 @@
-# -*- coding: utf-8 -*-
-###############################################################################################################
-# This file is part of MELODIST - MEteoroLOgical observation time series DISaggregation Tool                  #
-# a program to disaggregate daily values of meteorological variables to hourly values                         #
-#                                                                                                             #
-# Copyright (C) 2016  Florian Hanzer (1,2), Kristian Förster (1,2), Benjamin Winter (1,2), Thomas Marke (1)   #
-#                                                                                                             #
-# (1) Institute of Geography, University of Innsbruck, Austria                                                #
-# (2) alpS - Centre for Climate Change Adaptation, Innsbruck, Austria                                         #
-#                                                                                                             #
-# MELODIST is free software: you can redistribute it and/or modify                                            #
-# it under the terms of the GNU General Public License as published by                                        #
-# the Free Software Foundation, either version 3 of the License, or                                           #
-# (at your option) any later version.                                                                         #
-#                                                                                                             #
-# MELODIST is distributed in the hope that it will be useful,                                                 #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of                                              #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                                                #
-# GNU General Public License for more details.                                                                #
-#                                                                                                             #
-# You should have received a copy of the GNU General Public License                                           #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.                                       #
-#                                                                                                             #
-###############################################################################################################
-
-from __future__ import print_function, division, absolute_import
-import melodist.util
-import pandas as pd
+################################################################################
+# This file is part of MELODIST - MEteoroLOgical observation time series       #
+# DISaggregation Tool.                                                         #
+#                                                                              #
+# Copyright (C) 2016-2023 Florian Hanzer, Kristian Förster, Benjamin Winter,   #
+# Thomas Marke                                                                 #
+#                                                                              #
+# MELODIST is free software: you can redistribute it and/or modify it under    #
+# the terms of the GNU General Public License as published by the Free         #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# MELODIST is distributed in the hope that it will be useful, but WITHOUT ANY  #
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    #
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more        #
+# details.                                                                     #
+#                                                                              #
+# You should have received a copy of the GNU General Public License along with #
+# this program.  If not, see <http://www.gnu.org/licenses/>.                   #
+################################################################################
 import numpy as np
+import pandas as pd
 import scipy.optimize
+
+import melodist.util
 
 """
 This routine diaggregates daily values of global radiation data to hourly values
 """
 
 
-def disaggregate_radiation(data_daily,
-                           sun_times=None,
-                           pot_rad=None,
-                           method='pot_rad',
-                           angstr_a=0.25,
-                           angstr_b=0.5,
-                           bristcamp_a=0.75,
-                           bristcamp_c=2.4,
-                           mean_course=None):
+def disaggregate_radiation(
+    data_daily,
+    sun_times=None,
+    pot_rad=None,
+    method='pot_rad',
+    angstr_a=0.25,
+    angstr_b=0.5,
+    bristcamp_a=0.75,
+    bristcamp_c=2.4,
+    mean_course=None,
+):
     """general function for radiation disaggregation
 
     Args:
@@ -53,7 +50,7 @@ def disaggregate_radiation(data_daily,
         angstr_a: parameter a of the Angstrom model (intercept)
         angstr_b: parameter b of the Angstrom model (slope)
         mean_course: monthly values of the mean hourly radiation course
-        
+
     Returns:
         Disaggregated hourly values of shortwave radiation.
     """
@@ -67,7 +64,9 @@ def disaggregate_radiation(data_daily,
         assert mean_course is not None
 
         pot_rad = pd.Series(index=glob_disagg.index, dtype=float)
-        pot_rad[:] = mean_course.unstack().loc[list(zip(pot_rad.index.month, pot_rad.index.hour))].values
+        pot_rad[:] = (
+            mean_course.unstack().loc[list(zip(pot_rad.index.month, pot_rad.index.hour))].values
+        )
     else:
         assert pot_rad is not None
 
@@ -77,24 +76,41 @@ def disaggregate_radiation(data_daily,
         globalrad = data_daily.glob
     elif method == 'pot_rad_via_ssd':
         # in this case use the Angstrom model
-        globalrad = pd.Series(index=data_daily.index, data=0.)
+        globalrad = pd.Series(index=data_daily.index, data=0.0)
         dates = sun_times.index[sun_times.daylength > 0]  # account for polar nights
-        globalrad[dates] = angstroem(data_daily.ssd[dates], sun_times.daylength[dates],
-                                     pot_rad_daily[dates], angstr_a, angstr_b)
+        globalrad[dates] = angstroem(
+            data_daily.ssd[dates],
+            sun_times.daylength[dates],
+            pot_rad_daily[dates],
+            angstr_a,
+            angstr_b,
+        )
     elif method == 'pot_rad_via_bc':
         # using data from Bristow-Campbell model
-        globalrad = bristow_campbell(data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c)
+        globalrad = bristow_campbell(
+            data_daily.tmin, data_daily.tmax, pot_rad_daily, bristcamp_a, bristcamp_c
+        )
 
-    globalrad_equal = globalrad.reindex(pot_rad.index, method='ffill')  # hourly values (replicate daily mean value for each hour)
+    globalrad_equal = globalrad.reindex(
+        pot_rad.index, method='ffill'
+    )  # hourly values (replicate daily mean value for each hour)
     pot_rad_daily_equal = pot_rad_daily.reindex(pot_rad.index, method='ffill')
     glob_disagg = pot_rad / pot_rad_daily_equal * globalrad_equal
-    glob_disagg[glob_disagg < 1e-2] = 0.
+    glob_disagg[glob_disagg < 1e-2] = 0.0
 
     return glob_disagg
 
 
-def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slope_azimuth=0,
-                        cloud_fraction=0, split=False):
+def potential_radiation(
+    dates,
+    lon,
+    lat,
+    timezone,
+    terrain_slope=0,
+    terrain_slope_azimuth=0,
+    cloud_fraction=0,
+    split=False,
+):
     """
     Calculate potential shortwave radiation for a specific location and time.
 
@@ -126,7 +142,7 @@ def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slop
         If True, return a DataFrame containing direct and diffuse radiation,
         otherwise return a Series containing total radiation
     """
-    solar_constant = 1367.
+    solar_constant = 1367.0
     days_per_year = 365.25
     tropic_of_cancer = np.deg2rad(23.43697)
     solstice = 173.0
@@ -137,16 +153,19 @@ def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slop
     day_of_year = np.array(dates.dayofyear)
 
     # compute solar decline in rad
-    solar_decline = tropic_of_cancer * np.cos(2.0 * np.pi * (day_of_year - solstice) / days_per_year)
+    solar_decline = tropic_of_cancer * np.cos(
+        2.0 * np.pi * (day_of_year - solstice) / days_per_year
+    )
 
     # compute the sun hour angle in rad
-    standard_meridian = timezone * 15.
-    delta_lat_time = (lon - standard_meridian) * 24. / 360.
-    hour_angle = np.pi * (((dates_hour + dates_minute / 60. + delta_lat_time) / 12.) - 1.)
+    standard_meridian = timezone * 15.0
+    delta_lat_time = (lon - standard_meridian) * 24.0 / 360.0
+    hour_angle = np.pi * (((dates_hour + dates_minute / 60.0 + delta_lat_time) / 12.0) - 1.0)
 
     # get solar zenith angle
-    cos_solar_zenith = (np.sin(solar_decline) * np.sin(np.deg2rad(lat))
-                        + np.cos(solar_decline) * np.cos(np.deg2rad(lat)) * np.cos(hour_angle))
+    cos_solar_zenith = np.sin(solar_decline) * np.sin(np.deg2rad(lat)) + np.cos(
+        solar_decline
+    ) * np.cos(np.deg2rad(lat)) * np.cos(hour_angle)
     cos_solar_zenith = cos_solar_zenith.clip(min=0)
     solar_zenith_angle = np.arccos(cos_solar_zenith)
 
@@ -155,18 +174,26 @@ def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slop
     transmissivity_diffuse = (0.3 + 0.1 * cos_solar_zenith) * cloud_fraction
 
     # modify solar constant for eccentricity
-    beta = 2. * np.pi * (day_of_year / days_per_year)
-    radius_ratio = (1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta)
-                    + 0.000719 * np.cos(2. * beta) + 0.000077 * np.sin(2 * beta))
+    beta = 2.0 * np.pi * (day_of_year / days_per_year)
+    radius_ratio = (
+        1.00011
+        + 0.034221 * np.cos(beta)
+        + 0.00128 * np.sin(beta)
+        + 0.000719 * np.cos(2.0 * beta)
+        + 0.000077 * np.sin(2 * beta)
+    )
     solar_constant_times_radius_ratio = solar_constant * radius_ratio
 
     mu = np.arcsin(np.cos(solar_decline) * np.sin(hour_angle) / np.sin(solar_zenith_angle))
-    cosi = (np.cos(terrain_slope) * cos_solar_zenith
-            + np.sin(terrain_slope) * np.sin(solar_zenith_angle) * np.cos(mu - terrain_slope_azimuth))
+    cosi = np.cos(terrain_slope) * cos_solar_zenith + np.sin(terrain_slope) * np.sin(
+        solar_zenith_angle
+    ) * np.cos(mu - terrain_slope_azimuth)
 
     # get total shortwave radiation
     direct_radiation = solar_constant_times_radius_ratio * transmissivity_direct * cosi
-    diffuse_radiation = solar_constant_times_radius_ratio * transmissivity_diffuse * cos_solar_zenith
+    diffuse_radiation = (
+        solar_constant_times_radius_ratio * transmissivity_diffuse * cos_solar_zenith
+    )
     direct_radiation = direct_radiation.clip(min=0)
 
     df = pd.DataFrame(index=dates, data=dict(direct=direct_radiation, diffuse=diffuse_radiation))
@@ -241,10 +268,13 @@ def fit_bristow_campbell_params(tmin, tmax, pot_rad_daily, obs_rad_daily):
     obs_rad_daily : Series
         Mean observed daily solar radiation.
     """
+
     def bc_absbias(ac):
         return np.abs(np.mean(bristow_campbell(df.tmin, df.tmax, df.pot, ac[0], ac[1]) - df.obs))
 
-    df = pd.DataFrame(data=dict(tmin=tmin, tmax=tmax, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
+    df = pd.DataFrame(data=dict(tmin=tmin, tmax=tmax, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(
+        how='any'
+    )
     res = scipy.optimize.minimize(bc_absbias, [0.75, 2.4])  # i.e. we minimize the absolute bias
 
     return res.x
@@ -301,7 +331,9 @@ def fit_angstroem_params(ssd, day_length, pot_rad_daily, obs_rad_daily):
     obs_rad_daily : Series
         Mean observed daily solar radiation.
     """
-    df = pd.DataFrame(data=dict(ssd=ssd, day_length=day_length, pot=pot_rad_daily, obs=obs_rad_daily)).dropna(how='any')
+    df = pd.DataFrame(
+        data=dict(ssd=ssd, day_length=day_length, pot=pot_rad_daily, obs=obs_rad_daily)
+    ).dropna(how='any')
 
     def angstroem_opt(x, a, b):
         return angstroem(x[0], x[1], x[2], a, b)

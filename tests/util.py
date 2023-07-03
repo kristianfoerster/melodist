@@ -1,7 +1,9 @@
 import copy
-import melodist
-import pandas as pd
 import unittest
+
+import pandas as pd
+
+import melodist
 
 
 class MelodistTestCase(unittest.TestCase):
@@ -49,5 +51,3 @@ def notna_temp_days(dd, kind):
                .all(axis=1))
 
     return pos
-
-

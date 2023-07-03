@@ -1,40 +1,36 @@
-# -*- coding: utf-8 -*-
-###############################################################################################################
-# This file is part of MELODIST - MEteoroLOgical observation time series DISaggregation Tool                  #
-# a program to disaggregate daily values of meteorological variables to hourly values                         #
-#                                                                                                             #
-# Copyright (C) 2016  Florian Hanzer (1,2), Kristian Förster (1,2), Benjamin Winter (1,2), Thomas Marke (1)   #
-#                                                                                                             #
-# (1) Institute of Geography, University of Innsbruck, Austria                                                #
-# (2) alpS - Centre for Climate Change Adaptation, Innsbruck, Austria                                         #
-#                                                                                                             #
-# MELODIST is free software: you can redistribute it and/or modify                                            #
-# it under the terms of the GNU General Public License as published by                                        #
-# the Free Software Foundation, either version 3 of the License, or                                           #
-# (at your option) any later version.                                                                         #
-#                                                                                                             #
-# MELODIST is distributed in the hope that it will be useful,                                                 #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of                                              #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                                                #
-# GNU General Public License for more details.                                                                #
-#                                                                                                             #
-# You should have received a copy of the GNU General Public License                                           #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.                                       #
-#                                                                                                             #
-###############################################################################################################
+################################################################################
+# This file is part of MELODIST - MEteoroLOgical observation time series       #
+# DISaggregation Tool.                                                         #
+#                                                                              #
+# Copyright (C) 2016-2023 Florian Hanzer, Kristian Förster, Benjamin Winter,   #
+# Thomas Marke                                                                 #
+#                                                                              #
+# MELODIST is free software: you can redistribute it and/or modify it under    #
+# the terms of the GNU General Public License as published by the Free         #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# MELODIST is distributed in the hope that it will be useful, but WITHOUT ANY  #
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS    #
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more        #
+# details.                                                                     #
+#                                                                              #
+# You should have received a copy of the GNU General Public License along with #
+# this program.  If not, see <http://www.gnu.org/licenses/>.                   #
+################################################################################
+import pandas as pd
 
-from __future__ import print_function, division, absolute_import
 import melodist
 import melodist.util
-import pandas as pd
 
 
 class Station(object):
     """
-    Class representing meteorological stations including all relevant 
+    Class representing meteorological stations including all relevant
     information such as metadata and meteorological time series (observed
     and disaggregated)
     """
+
     _columns_daily = [
         'tmean',
         'tmin',
@@ -95,7 +91,9 @@ class Station(object):
 
         for var in 'tmin', 'tmax', 'tmean':
             if var in df:
-                assert not any(df[var] < 200), 'Implausible temperature values detected - temperatures must be in K'
+                assert not any(
+                    df[var] < 200
+                ), 'Implausible temperature values detected - temperatures must be in K'
 
         self._data_daily = df.copy()
 
@@ -135,7 +133,7 @@ class Station(object):
     def timezone(self):
         """
         Timezone indicates the differnce in hours calculated from UTC
-        
+
         Negative values indicate timezones later than UTC, i.e. west of 0 deg
         long. Positive values indicate the reverse.
         """
@@ -176,7 +174,9 @@ class Station(object):
         Computes the times of sunrise, solar noon, and sunset for each day.
         """
 
-        self.sun_times = melodist.util.get_sun_times(self.data_daily.index, self.lon, self.lat, self.timezone)
+        self.sun_times = melodist.util.get_sun_times(
+            self.data_daily.index, self.lon, self.lat, self.timezone
+        )
 
     def disaggregate_wind(self, method='equal'):
         """
@@ -198,7 +198,9 @@ class Station(object):
                 Draws random numbers to distribute wind speed (usually not conserving the
                 daily average).
         """
-        self.data_disagg.wind = melodist.disaggregate_wind(self.data_daily.wind, method=method, **self.statistics.wind)
+        self.data_disagg.wind = melodist.disaggregate_wind(
+            self.data_daily.wind, method=method, **self.statistics.wind
+        )
 
     def disaggregate_humidity(self, method='equal', preserve_daily_mean=False):
         """
@@ -213,12 +215,13 @@ class Station(object):
                 Mean daily humidity is duplicated for the 24 hours of the day. (Default)
 
             ``minimal``:
-                Calculates humidity from daily dew point temperature by setting the dew point temperature
-                equal to the daily minimum temperature.
+                Calculates humidity from daily dew point temperature by setting the dew point
+                temperature equal to the daily minimum temperature.
 
             ``dewpoint_regression``:
-                Calculates humidity from daily dew point temperature by calculating dew point temperature
-                using ``Tdew = a * Tmin + b``, where ``a`` and ``b`` are determined by calibration.
+                Calculates humidity from daily dew point temperature by calculating dew point
+                temperature using ``Tdew = a * Tmin + b``, where ``a`` and ``b`` are determined by
+                calibration.
 
             ``linear_dewpoint_variation``:
                 Calculates humidity from hourly dew point temperature by assuming a linear dew point
@@ -232,17 +235,20 @@ class Station(object):
                 derived from observations.
 
         preserve_daily_mean : bool, optional
-            If True, correct the daily mean values of the disaggregated data with the observed daily means.
+            If True, correct the daily mean values of the disaggregated data with the observed daily
+            means.
         """
         self.data_disagg.hum = melodist.disaggregate_humidity(
             self.data_daily,
             temp=self.data_disagg.temp,
             method=method,
             preserve_daily_mean=preserve_daily_mean,
-            **self.statistics.hum
+            **self.statistics.hum,
         )
 
-    def disaggregate_temperature(self, method='sine_min_max', min_max_time='fix', mod_nighttime=False):
+    def disaggregate_temperature(
+        self, method='sine_min_max', min_max_time='fix', mod_nighttime=False
+    ):
         """
         Disaggregate air temperature.
 
@@ -280,7 +286,8 @@ class Station(object):
                 Minimum/maximum temperature are assumed to occur at sunrise / solar noon + 2 h.
 
             ``sun_loc_shift``:
-                Minimum/maximum temperature are assumed to occur at sunrise / solar noon + monthly mean shift.
+                Minimum/maximum temperature are assumed to occur at sunrise / solar noon + monthly
+                mean shift.
 
         mod_nighttime : bool, optional
             Use linear interpolation between minimum and maximum temperature.
@@ -292,10 +299,12 @@ class Station(object):
             max_delta=self.statistics.temp.max_delta,
             mean_course=self.statistics.temp.mean_course,
             sun_times=self.sun_times,
-            mod_nighttime=mod_nighttime
+            mod_nighttime=mod_nighttime,
         )
 
-    def disaggregate_precipitation(self, method='equal', zerodiv='uniform', shift=0, master_precip=None):
+    def disaggregate_precipitation(
+        self, method='equal', zerodiv='uniform', shift=0, master_precip=None
+    ):
         """
         Disaggregate precipitation.
 
@@ -329,11 +338,18 @@ class Station(object):
             for months, stats in zip(self.statistics.precip.months, self.statistics.precip.stats):
                 precip_daily = melodist.seasonal_subset(self.data_daily.precip, months=months)
                 if len(precip_daily) > 1:
-                    data = melodist.disagg_prec(precip_daily, method=method, cascade_options=stats,
-                                                shift=shift, zerodiv=zerodiv)
+                    data = melodist.disagg_prec(
+                        precip_daily,
+                        method=method,
+                        cascade_options=stats,
+                        shift=shift,
+                        zerodiv=zerodiv,
+                    )
                     precip_disagg.loc[data.index] = data
         elif method == 'masterstation':
-            precip_disagg = melodist.precip_master_station(self.data_daily.precip, master_precip, zerodiv)
+            precip_disagg = melodist.precip_master_station(
+                self.data_daily.precip, master_precip, zerodiv
+            )
 
         self.data_disagg.precip = precip_disagg
 
@@ -368,7 +384,9 @@ class Station(object):
             self.calc_sun_times()
 
         if pot_rad is None and method != 'mean_course':
-            pot_rad = melodist.potential_radiation(self.data_disagg.index, self.lon, self.lat, self.timezone)
+            pot_rad = melodist.potential_radiation(
+                self.data_disagg.index, self.lon, self.lat, self.timezone
+            )
 
         self.data_disagg.glob = melodist.disaggregate_radiation(
             self.data_daily,
@@ -379,10 +397,12 @@ class Station(object):
             angstr_b=self.statistics.glob.angstroem.b,
             bristcamp_a=self.statistics.glob.bristcamp.a,
             bristcamp_c=self.statistics.glob.bristcamp.c,
-            mean_course=self.statistics.glob.mean_course
+            mean_course=self.statistics.glob.mean_course,
         )
 
-    def interpolate(self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs):
+    def interpolate(
+        self, column_hours, method='linear', limit=24, limit_direction='both', **kwargs
+    ):
         """
         Wrapper function for ``pandas.Series.interpolate`` that can be used to
         "disaggregate" values using various interpolation methods.
@@ -404,8 +424,13 @@ class Station(object):
         We can use the interpolation functions provided by pandas/scipy to derive
         hourly values:
 
-        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19}) # linear interpolation (default)
-        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19}, method='cubic') # cubic spline
+        >>> # Linear interpolation (default)
+        >>> mystation.data_hourly.temp = mystation.interpolate({'T7': 7, 'T14': 14, 'T19': 19})
+        >>> # Cubic spline interpolation
+        >>> mystation.data_hourly.temp = mystation.interpolate(
+        >>>     {'T7': 7, 'T14': 14, 'T19': 19},
+        >>>     method='cubic',
+        >>> )
         """
         kwargs = dict(kwargs, method=method, limit=limit, limit_direction=limit_direction)
         data = melodist.util.prepare_interpolation_data(self.data_daily, column_hours)
