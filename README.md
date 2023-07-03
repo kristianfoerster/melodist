@@ -125,6 +125,8 @@ Hanzer, F., Förster, K., Nemec, J., and Strasser, U.: Projected cryospheric and
 
 ## Version history
 
+* 0.1.5 (03 Jul 2023):
+  * Fix compatibility with recent numpy/pandas versions
 * 0.1.4 (05 May 2020):
   * Upgraded to warrant pandas compatibility
 * 0.1.3 (21 Nov 2018):
