@@ -20,6 +20,8 @@
 ################################################################################
 from __future__ import absolute_import, division, print_function
 
+from . __version__ import __version__
+
 from . import cascade
 from .data_io import *
 from .humidity import *
