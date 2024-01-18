@@ -61,6 +61,8 @@ jobs:
       - name: Publish package to TestPyPI
         if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository_url: https://test.pypi.org/legacy/
 
       - name: Check uploaded package
         if: github.event_name == 'push'
