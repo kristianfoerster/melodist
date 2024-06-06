@@ -24,7 +24,7 @@ import scipy.stats
 
 
 def hourly_index(daily_index, fill_gaps=False):
-    index = pd.date_range(start=daily_index.min(), end=daily_index.max().replace(hour=23), freq='H')
+    index = pd.date_range(start=daily_index.min(), end=daily_index.max().replace(hour=23), freq='h')
 
     # remove days that are not in the daily index:
     if not fill_gaps and len(index) > len(daily_index) * 24:
@@ -58,7 +58,7 @@ def distribute_equally(daily_data, divide=False):
     index = hourly_index(daily_data.index)
     hourly_data = daily_data.reindex(index)
     hourly_data = hourly_data.groupby(hourly_data.index.day).transform(
-        lambda x: x.fillna(method='ffill', limit=23)
+        lambda x: x.ffill(limit=23)
     )
 
     if divide:

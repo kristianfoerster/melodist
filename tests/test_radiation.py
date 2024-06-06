@@ -43,4 +43,4 @@ class TestRadiation(util.MelodistTestCase):
 
         assert np.all(np.isfinite(rd))
         assert self.nighttime_radiation_iszero(rd, tol=10)
-        assert np.allclose(r.resample('M').mean(), rd.resample('M').mean(), rtol=0.1)
+        assert np.allclose(r.resample('ME').mean(), rd.resample('ME').mean(), rtol=0.1)

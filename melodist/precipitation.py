@@ -145,7 +145,7 @@ def disagg_prec_cascade(precip_daily, cascade_options, hourly=True, level=9, shi
     # disaggregation for each level
     for l in range(1, si + 1):
         if l == 1:
-            vdn_in = precip_daily
+            vdn_in = precip_daily.to_numpy()
             vdn_out = vdn1
         elif l == 2:
             vdn_in = vdn_out
@@ -660,8 +660,7 @@ def build_casc(ObsData, hourly=True, level=9, months=None, avg_stats=True, perce
     # Parameter estimation for each season
     for cur_months in months:
         vdn = seasonal_subset(ObsData, cur_months)
-        if len(ObsData.precip[np.isnan(ObsData.precip)]) > 0:
-            ObsData.precip[np.isnan(ObsData.precip)] = 0
+        ObsData['precip'] = ObsData['precip'].fillna(0)
 
         casc_opt = melodist.cascade.CascadeStatistics()
         casc_opt.percentile = percentile
@@ -708,7 +707,7 @@ def sub_level_index(daily_index, level=9, fill_gaps=False):
     sublevel_index = pd.date_range(
         start=daily_index.min(),
         end=daily_index.max().replace(hour=23, minute=59, second=59),
-        freq='%sU' % frequency,
+        freq='%sus' % frequency,
     )
     # remove days that are not in the daily index:
     time_steps = 2**level
@@ -722,7 +721,7 @@ def sub_level_index(daily_index, level=9, fill_gaps=False):
                 keep=True,
             ),
         )
-        df.index = pd.to_datetime(df.index)  # got a warning at firsr: "to_datetime"is depreciated
+        df.index = pd.to_datetime(df.index)
         dropdates = list(set(sublevel_index.date) - set(daily_index.date))
         df.loc[dropdates, 'keep'] = False
         df = df[df.keep]

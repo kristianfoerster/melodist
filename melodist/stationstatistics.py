@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License along with #
 # this program.  If not, see <http://www.gnu.org/licenses/>.                   #
 ################################################################################
+import io
 import json
 
 import numpy as np
@@ -251,18 +252,24 @@ class StationStatistics(object):
 
         if stats.temp.max_delta is not None:
             stats.temp.max_delta = pd.read_json(
-                json.dumps(stats.temp.max_delta), typ='series'
+                io.StringIO(json.dumps(stats.temp.max_delta)),
+                typ='series',
             ).sort_index()
 
         if stats.temp.mean_course is not None:
-            mc = pd.read_json(json.dumps(stats.temp.mean_course), typ='frame').sort_index()[
-                np.arange(1, 12 + 1)
-            ]
+            mc = (
+                pd.read_json(
+                    io.StringIO(json.dumps(stats.temp.mean_course)),
+                    typ='frame',
+                )
+                .sort_index()
+            )[np.arange(1, 12 + 1)]
             stats.temp.mean_course = mc.sort_index()[np.arange(1, 12 + 1)]
 
         if stats.hum.month_hour_precip_mean is not None:
             mhpm = pd.read_json(
-                json.dumps(stats.hum.month_hour_precip_mean), typ='frame'
+                io.StringIO(json.dumps(stats.hum.month_hour_precip_mean)),
+                typ='frame',
             ).sort_index()
             mhpm = mhpm.set_index(['level_0', 'level_1', 'level_2'])  # convert to MultiIndex
             mhpm = mhpm.squeeze()  # convert to Series
@@ -271,7 +278,9 @@ class StationStatistics(object):
 
         for var in ('angstroem', 'bristcamp', 'mean_course'):
             if stats.glob[var] is not None:
-                stats.glob[var] = pd.read_json(json.dumps(stats.glob[var])).sort_index()
+                stats.glob[var] = pd.read_json(
+                    io.StringIO(json.dumps(stats.glob[var]))
+                ).sort_index()
 
         if stats.glob.mean_course is not None:
             stats.glob.mean_course = stats.glob.mean_course[np.arange(1, 12 + 1)]
