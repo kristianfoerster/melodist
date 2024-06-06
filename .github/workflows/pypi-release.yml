@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'kristianfoerster/melodist'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: "3.12"
@@ -43,7 +43,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: "3.12"
